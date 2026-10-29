@@ -1,26 +1,199 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Brand — sampled from the supplied UI */
+  --color-ink: #1c1c1a;
+  --color-ink-soft: #242422;
+  --color-ink-900: #111110;
+  --color-night: #15121b;
+
+  --color-forest: #0a2e0a;
+  --color-forest-deep: #071f07;
+  --color-forest-800: #103f10;
+  --color-forest-700: #1b3d1b;
+  --color-moss: #2e6b2e;
+  --color-grass: #2e8b2e;
+  --color-lime: #22c522;
+  --color-emblem: #009140;
+  --color-mint: #eff5ee;
+  --color-mint-strong: #ecf2ec;
+
+  --color-purple-deep: #46209a;
+  --color-purple: #6330d3;
+  --color-purple-bright: #582cc0;
+  --color-violet: #9a69eb;
+  --color-plum: #19024f;
+  --color-plum-deep: #0b0122;
+
+  --color-paper: #f6f5f2;
+  --color-cream: #faf9f8;
+  --color-line: #e5e7eb;
+  --color-line-soft: #eaeaE8;
+  --color-muted: #6b7280;
+  --color-body: #4b4b47;
+
+  --color-gold: #feca0a;
+  --color-coral: #ff4848;
+  --color-amber: #b45309;
+  --color-orange: #c2410c;
+  --color-blue: #2d6fe8;
+
+  --radius-card: 1.25rem;
+  --radius-panel: 1.5rem;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 1px 2px rgba(16, 24, 16, 0.04),
+    0 12px 32px -18px rgba(16, 24, 16, 0.22);
+  --shadow-lift: 0 24px 60px -28px rgba(16, 24, 16, 0.35);
+
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-fade-up: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-float: float 7s ease-in-out infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-white font-sans text-ink antialiased;
+  }
+
+  ::selection {
+    background: rgba(34, 197, 34, 0.22);
+    color: #0a2e0a;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-grass);
+    outline-offset: 3px;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+  }
+}
+
+@utility container-oak {
+  width: 100%;
+  max-width: 80rem; /* 1280px */
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+
+  @media (width >= 48rem) {
+    padding-inline: 2rem;
+  }
+
+  @media (width >= 64rem) {
+    padding-inline: 2.5rem;
+  }
+}
+
+@utility eyebrow {
+  font-size: 0.6875rem;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+@utility surface-card {
+  background-color: #fff;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility display-1 {
+  font-size: clamp(2.25rem, 5.1vw, 4.25rem);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+}
+
+@utility display-2 {
+  font-size: clamp(1.9rem, 3.6vw, 3rem);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+
+@utility display-3 {
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+}
+
+/* Native select arrow that matches the design */
+@utility select-oak {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  padding-right: 2.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

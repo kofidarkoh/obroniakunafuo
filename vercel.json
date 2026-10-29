@@ -1,0 +1,17 @@
+{
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_SITE_URL": "https://obroniakunafuo.vercel.app"
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/upload",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "POST, OPTIONS" }
+      ]
+    }
+  ],
+  "crons": []
+}
