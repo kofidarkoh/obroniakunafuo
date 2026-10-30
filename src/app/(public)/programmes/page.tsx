@@ -9,15 +9,18 @@ import {
   CalendarDays,
   CheckCircle2,
   Church,
+  Code2,
   GraduationCap,
   Hammer,
   HandHeart,
   Heart,
   HeartHandshake,
+  HeartPulse,
   House,
   Landmark,
   Leaf,
   MapPin,
+  MousePointer2,
   Pill,
   Repeat2,
   Search,
@@ -25,6 +28,7 @@ import {
   Stethoscope,
   Tent,
   Users,
+  Utensils,
 } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/primitives";
@@ -43,27 +47,50 @@ const accent = {
     text: "text-grass",
     dot: "bg-grass",
     border: "border-grass",
+    chip: "bg-mint text-moss",
+    pill: "border-grass/35 bg-grass/10 text-grass-bright",
     button: "primary" as const,
   },
   orange: {
     text: "text-orange",
     dot: "bg-orange",
     border: "border-orange",
+    chip: "bg-orange/10 text-orange",
+    pill: "border-orange/40 bg-orange/10 text-gold-bright",
     button: "orange" as const,
   },
   blue: {
     text: "text-blue",
     dot: "bg-blue",
     border: "border-blue",
+    chip: "bg-blue/10 text-blue",
+    pill: "border-blue/40 bg-blue/10 text-blue-bright",
     button: "blue" as const,
   },
   purple: {
     text: "text-purple-deep",
     dot: "bg-purple-deep",
     border: "border-purple-deep",
+    chip: "bg-purple-deep/10 text-purple-deep",
+    pill: "border-purple/40 bg-purple/10 text-violet-soft",
     button: "purple" as const,
   },
 };
+
+const programmeIcons = {
+  "food-support-relief": Utensils,
+  "education-sponsorship": GraduationCap,
+  "healthcare-support": HeartPulse,
+  "shelter-housing-support": House,
+  "widow-empowerment": HandHeart,
+} as const;
+
+/** The mock labels the education, health and shelter photos in the corner. */
+const labelledImages = new Set([
+  "education-sponsorship",
+  "healthcare-support",
+  "shelter-housing-support",
+]);
 
 const bulletIcons: Record<string, (typeof Leaf)[]> = {
   "food-support-relief": [Leaf, Shirt, CalendarDays, Church, Accessibility],
@@ -81,7 +108,7 @@ const bulletIcons: Record<string, (typeof Leaf)[]> = {
     HeartHandshake,
   ],
   "shelter-housing-support": [Hammer, House, Tent, MapPin],
-  "widow-empowerment": [HandHeart, GraduationCap, Users, HeartHandshake],
+  "widow-empowerment": [Heart, GraduationCap, Users, HeartHandshake],
 };
 
 const programmeStats: Record<
@@ -120,29 +147,32 @@ const beneficiaryGroups = [
     title: "Widows",
     body: "Women who have lost their husbands and face economic and social vulnerability without family support.",
     icon: HandHeart,
-    tone: "bg-gold/15 text-gold",
+    tone: "text-gold",
   },
   {
     title: "Orphans",
     body: "Children who have lost one or both parents and need educational and emotional support to build their future.",
     icon: Baby,
-    tone: "bg-gold/15 text-gold",
+    tone: "text-gold",
   },
   {
     title: "Persons With Disabilities",
     body: "Over 200 PWDs across the Ahafo Region — added to our programmes in 2023 as part of our community inclusion commitment.",
     icon: Accessibility,
-    tone: "bg-blue/15 text-blue",
+    tone: "text-blue-bright",
   },
   {
     title: "The Aged",
     body: "Elderly community members who need companionship, healthcare access and daily support to live with dignity.",
     icon: Users,
-    tone: "bg-gold/15 text-gold",
+    tone: "text-gold",
   },
 ];
 
-const approachIcons = [Search, Repeat2, HandHeart, Repeat2];
+const approachIcons = [Search, Code2, MousePointer2, Repeat2];
+
+const heading2 =
+  "text-[clamp(1.5rem,2.2vw,1.875rem)] font-semibold leading-[1.15] tracking-[-0.02em]";
 
 export default async function ProgrammesPage() {
   const programmes = await listProgrammes();
@@ -154,15 +184,15 @@ export default async function ProgrammesPage() {
     <>
       {/* Hero */}
       <section className="bg-ink text-white">
-        <div className="container-oak py-12 sm:py-16 lg:py-20">
-          <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-16">
+        <div className="container-oak py-14 sm:py-20 lg:py-24">
+          <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-16">
             <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70">
-                <span className="size-1.5 rounded-full bg-lime" />4 core
+              <span className="inline-flex items-center gap-2 rounded-full border border-grass/30 bg-grass/10 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-grass-bright">
+                <span className="size-1.5 rounded-full bg-grass-bright" />4 core
                 programmes · Ahafo Region &amp; beyond
               </span>
 
-              <h1 className="display-1 mt-6 max-w-[14ch]">
+              <h1 className="mt-6 max-w-[17ch] text-[clamp(2.25rem,4.1vw,3.5rem)] font-semibold leading-[1.04] tracking-[-0.035em]">
                 Programmes built on{" "}
                 <span className="text-lime">compassion and action</span>
               </h1>
@@ -174,24 +204,28 @@ export default async function ProgrammesPage() {
               </p>
 
               <div className="mt-7 flex flex-wrap gap-2">
-                {orderedProgrammes.map((programme) => (
-                  <a
-                    key={programme.slug}
-                    href={`#${programme.slug}`}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3.5 py-1.5 text-xs text-white/75 transition-colors hover:border-white/35"
-                  >
-                    <span
+                {orderedProgrammes.map((programme) => {
+                  const Icon =
+                    programmeIcons[
+                      programme.slug as keyof typeof programmeIcons
+                    ] ?? Utensils;
+                  return (
+                    <a
+                      key={programme.slug}
+                      href={`#${programme.slug}`}
                       className={cn(
-                        "size-1.5 rounded-full",
-                        accent[programme.accent].dot,
+                        "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition-colors hover:brightness-125",
+                        accent[programme.accent].pill,
                       )}
-                    />
-                    {programme.shortTitle}
-                  </a>
-                ))}
+                    >
+                      <Icon className="size-3.5" aria-hidden="true" />
+                      {programme.category}
+                    </a>
+                  );
+                })}
               </div>
 
-              <div className="mt-9 flex flex-wrap gap-x-6 gap-y-2 text-[11px] text-white/45">
+              <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/10 pt-5 text-[11px] text-white/45">
                 {[
                   "800–1,000 beneficiaries",
                   "200+ PWDs",
@@ -217,7 +251,7 @@ export default async function ProgrammesPage() {
                   { value: "4", label: "Core programme areas" },
                   { value: "10yr", label: "Of community service" },
                 ].map((stat) => (
-                  <div key={stat.label} className="bg-ink-soft p-5">
+                  <div key={stat.label} className="bg-ink-soft p-6">
                     <p className="text-2xl font-semibold text-grass">
                       {stat.value}
                     </p>
@@ -238,13 +272,13 @@ export default async function ProgrammesPage() {
 
       {/* Filters */}
       <div className="border-b border-line bg-white">
-        <div className="container-oak flex gap-8 overflow-x-auto">
+        <div className="container-oak flex items-center justify-between gap-4 overflow-x-auto">
           {orderedProgrammes.map((programme, index) => (
             <a
               key={programme.slug}
               href={`#${programme.slug}`}
               className={cn(
-                "flex shrink-0 items-center gap-2 border-b-2 py-4 text-[13px] font-medium transition-colors",
+                "-mb-px flex shrink-0 items-center gap-2.5 whitespace-nowrap border-b-2 px-6 py-5 text-[15px] font-medium transition-colors",
                 index === 0
                   ? cn(accent[programme.accent].border, "text-ink")
                   : "border-transparent text-body hover:text-ink",
@@ -252,7 +286,7 @@ export default async function ProgrammesPage() {
             >
               <span
                 className={cn(
-                  "size-1.5 rounded-full",
+                  "size-2 rounded-full",
                   accent[programme.accent].dot,
                 )}
               />
@@ -267,6 +301,9 @@ export default async function ProgrammesPage() {
         const a = accent[programme.accent];
         const icons = bulletIcons[programme.slug] ?? [];
         const stats = programmeStats[programme.slug] ?? [];
+        const ProgrammeIcon =
+          programmeIcons[programme.slug as keyof typeof programmeIcons] ??
+          Heart;
         const imageFirst = index % 2 === 0;
 
         return (
@@ -274,8 +311,8 @@ export default async function ProgrammesPage() {
             key={programme.slug}
             id={programme.slug}
             className={cn(
-              "scroll-mt-24 py-16 sm:py-20",
-              index % 2 === 0 ? "bg-paper" : "bg-white",
+              "scroll-mt-24 py-16 sm:py-20 lg:py-24",
+              index % 2 === 0 ? "bg-white" : "bg-paper",
             )}
           >
             <div className="container-oak grid gap-10 lg:grid-cols-2 lg:gap-16">
@@ -293,6 +330,11 @@ export default async function ProgrammesPage() {
                     sizes="(min-width: 1024px) 600px, 90vw"
                     className="object-cover"
                   />
+                  {labelledImages.has(programme.slug) ? (
+                    <span className="absolute left-3 top-3 rounded-[6px] bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink backdrop-blur">
+                      {programme.category} programme
+                    </span>
+                  ) : null}
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   {stats.map((stat) => (
@@ -300,22 +342,15 @@ export default async function ProgrammesPage() {
                       key={stat.label}
                       className="rounded-[10px] border border-line bg-white p-3.5"
                     >
-                      {stat.value ? (
-                        <p
-                          className={cn(
-                            "text-lg font-semibold",
-                            a.text,
-                          )}
-                        >
-                          {stat.value}
-                        </p>
-                      ) : null}
                       <p
                         className={cn(
-                          "text-[10px] leading-snug text-muted",
-                          stat.value && "mt-1",
+                          "text-lg font-semibold leading-none",
+                          a.text,
                         )}
                       >
+                        {stat.value ?? "—"}
+                      </p>
+                      <p className="mt-1.5 text-[10px] leading-snug text-muted">
                         {stat.label}
                       </p>
                     </div>
@@ -332,24 +367,28 @@ export default async function ProgrammesPage() {
                 <p className={cn("eyebrow", a.text)}>
                   Programme {String(index + 1).padStart(2, "0")}
                 </p>
-                <h2 className="display-2 mt-4">{programme.title}</h2>
+                <h2 className={cn("mt-4", heading2)}>{programme.title}</h2>
                 <p className="mt-4 max-w-xl text-sm leading-relaxed text-body">
                   {programme.description}
                 </p>
 
-                <ul className="mt-6 flex flex-col gap-3">
+                <ul className="mt-6 flex flex-col gap-4">
                   {programme.bullets.map((bullet, i) => {
                     const Icon = icons[i] ?? CheckCircle2;
                     return (
                       <li
                         key={bullet}
-                        className="flex items-start gap-2.5 text-[13px] leading-relaxed text-body"
+                        className="flex items-start gap-3 text-[13px] leading-relaxed text-body"
                       >
-                        <Icon
-                          className={cn("mt-0.5 size-4 shrink-0", a.text)}
-                          aria-hidden="true"
-                        />
-                        {bullet}
+                        <span
+                          className={cn(
+                            "mt-px flex size-7 shrink-0 items-center justify-center rounded-[8px]",
+                            a.chip,
+                          )}
+                        >
+                          <Icon className="size-3.5" aria-hidden="true" />
+                        </span>
+                        <span className="pt-1">{bullet}</span>
                       </li>
                     );
                   })}
@@ -360,7 +399,7 @@ export default async function ProgrammesPage() {
                     href={`/donate?programme=${programme.slug}`}
                     variant={a.button}
                   >
-                    <Heart className="size-4" aria-hidden="true" />
+                    <ProgrammeIcon className="size-4" aria-hidden="true" />
                     {programme.cta}
                   </ButtonLink>
                 </div>
@@ -371,27 +410,23 @@ export default async function ProgrammesPage() {
       })}
 
       {/* Beneficiary groups */}
-      <section className="bg-ink py-14 text-white sm:py-16">
-        <div className="container-oak grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="bg-ink py-16 text-white sm:py-20">
+        <div className="container-oak grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0">
           {beneficiaryGroups.map((group) => {
             const Icon = group.icon;
             return (
               <div
                 key={group.title}
-                className="lg:border-l lg:border-white/10 lg:pl-8 lg:first:border-l-0 lg:first:pl-0"
+                className="flex flex-col items-center px-4 text-center lg:border-l lg:border-white/10 lg:px-8 lg:first:border-l-0"
               >
-                <span
-                  className={cn(
-                    "flex size-10 items-center justify-center rounded-full",
-                    group.tone,
-                  )}
-                >
-                  <Icon className="size-5" aria-hidden="true" />
-                </span>
+                <Icon
+                  className={cn("size-7", group.tone)}
+                  aria-hidden="true"
+                />
                 <h3 className="mt-4 text-sm font-semibold text-white">
                   {group.title}
                 </h3>
-                <p className="mt-2 text-[12px] leading-relaxed text-white/45">
+                <p className="mt-2 max-w-[30ch] text-[12px] leading-relaxed text-white/45">
                   {group.body}
                 </p>
               </div>
@@ -404,7 +439,7 @@ export default async function ProgrammesPage() {
       <section className="bg-white py-16 sm:py-20">
         <div className="container-oak">
           <Eyebrow tone="green">Our approach</Eyebrow>
-          <h2 className="display-2 mt-4">How we work in the community</h2>
+          <h2 className={cn("mt-4", heading2)}>How we work in the community</h2>
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-body">
             Our programmes succeed because they are deeply rooted in community
             relationships, not external interventions.
@@ -416,14 +451,14 @@ export default async function ProgrammesPage() {
               return (
                 <article
                   key={step.step}
-                  className="relative overflow-hidden rounded-[14px] border border-line bg-white p-6"
+                  className="rounded-[14px] border border-line bg-white p-6"
                 >
-                  <span className="pointer-events-none absolute right-4 top-3 text-4xl font-semibold text-grass/10">
+                  <span className="block text-[28px] font-semibold leading-none text-ink/10">
                     {step.step}
                   </span>
                   <span
                     className={cn(
-                      "flex size-9 items-center justify-center rounded-[10px]",
+                      "mt-4 flex size-9 items-center justify-center rounded-[10px]",
                       index % 2 === 0
                         ? "bg-mint text-moss"
                         : "bg-amber/10 text-amber",
@@ -459,7 +494,7 @@ export default async function ProgrammesPage() {
                   Community beneficiary — Ahafo Region
                 </span>
                 <span className="block text-[11px] text-white/45">
-                  Food support · Widows · Small-scale farming
+                  Food Support &amp; Education Programme
                 </span>
               </span>
             </figcaption>
@@ -473,7 +508,7 @@ export default async function ProgrammesPage() {
           <Eyebrow tone="dark" className="justify-center text-grass">
             Support our programmes
           </Eyebrow>
-          <h2 className="display-2 mx-auto mt-4 max-w-xl">
+          <h2 className={cn("mx-auto mt-4 max-w-xl", heading2)}>
             Every contribution funds real change
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-white/60">

@@ -20,7 +20,12 @@ import {
 } from "@/lib/data/content";
 import type { Notification } from "@/lib/data/types";
 import type { Programme, ProgrammeAccent } from "@/lib/site";
-import type { Story, StoryBlock } from "@/lib/stories";
+import type { Story } from "@/lib/stories";
+import {
+  estimateReadTime,
+  parseStoryBlocks,
+} from "@/lib/story-format";
+import { slugify } from "@/lib/utils";
 import type { FormState } from "@/lib/validation";
 
 const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
@@ -53,13 +58,6 @@ async function recordFailedLogin(ip: string) {
 
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
 }
 
 export async function loginAction(
@@ -175,22 +173,6 @@ export async function addNoteFormAction(formData: FormData) {
   revalidatePath("/admin");
 }
 
-function parseBlocks(body: string): StoryBlock[] {
-  return body
-    .split(/\n{2,}/)
-    .map((chunk) => chunk.trim())
-    .filter(Boolean)
-    .map((chunk) => {
-      if (chunk.startsWith("## ")) {
-        return { type: "h2", text: chunk.slice(3).trim() } as StoryBlock;
-      }
-      if (chunk.startsWith("> ")) {
-        return { type: "quote", text: chunk.slice(2).trim() } as StoryBlock;
-      }
-      return { type: "p", text: chunk.replace(/\n/g, " ") } as StoryBlock;
-    });
-}
-
 export async function saveStoryAction(
   _prev: FormState,
   formData: FormData,
@@ -198,47 +180,75 @@ export async function saveStoryAction(
   await requireAdmin();
   const title = text(formData, "title");
   if (title.length < 3) {
-    return { ok: false, message: "Please enter a story title." };
+    return {
+      ok: false,
+      message: "Please check the highlighted fields.",
+      errors: { title: ["Please enter a story title."] },
+    };
   }
 
   const body = text(formData, "body");
   if (!body) {
-    return { ok: false, message: "Please enter the story body." };
+    return {
+      ok: false,
+      message: "Please check the highlighted fields.",
+      errors: { body: ["Please enter the story body."] },
+    };
   }
 
   const excerpt = text(formData, "excerpt");
   if (!excerpt) {
-    return { ok: false, message: "Please enter a story excerpt." };
+    return {
+      ok: false,
+      message: "Please check the highlighted fields.",
+      errors: { excerpt: ["Please enter a story excerpt."] },
+    };
   }
 
-  const slug = text(formData, "slug") || slugify(title);
-  const existingSlug = text(formData, "existingSlug");
-  const programmes = text(formData, "programmes")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-  const status = (text(formData, "status") || "published") as "draft" | "published";
+  const slug = slugify(text(formData, "slug")) || slugify(title);
+  if (!slug) {
+    return {
+      ok: false,
+      message: "Please check the highlighted fields.",
+      errors: { slug: ["Please enter a title or slug."] },
+    };
+  }
 
-  // Duplicate-slug guard: prevent overwriting a different story's slug
-  if (!existingSlug) {
+  const existingSlug = text(formData, "existingSlug");
+  const programmes = formData
+    .getAll("programmes")
+    .map((item) => String(item).trim())
+    .filter(Boolean);
+  const status: Story["status"] =
+    text(formData, "status") === "draft" ? "draft" : "published";
+
+  // Duplicate-slug guard: prevent overwriting a different story's slug.
+  // Renaming an existing story is allowed, but it must not take over the
+  // slug of another record.
+  {
     const { getAdminStory } = await import("@/lib/data/content");
     const existing = await getAdminStory(slug);
-    if (existing) {
-      return { ok: false, message: "A story with this slug already exists." };
+    if (existing && slug !== existingSlug) {
+      return {
+        ok: false,
+        message: "Please check the highlighted fields.",
+        errors: { slug: ["A story with this slug already exists."] },
+      };
     }
   }
 
+  const blocks = parseStoryBlocks(body);
   const story: Story = {
     slug,
     title,
     category: text(formData, "category") || "Community",
     location: text(formData, "location") || "Ahafo Region",
-    date: text(formData, "date") || new Date().toLocaleDateString("en-CA"),
-    readTime: text(formData, "readTime") || "3 min read",
+    date: text(formData, "date") || new Date().toISOString().slice(0, 10),
+    readTime: estimateReadTime(body),
     image: text(formData, "image") || "/images/hero-community.jpg",
     imageAlt: text(formData, "imageAlt") || title,
     excerpt: text(formData, "excerpt"),
-    blocks: parseBlocks(body),
+    blocks,
     pullQuote: {
       text: text(formData, "pullQuote"),
       attribution:
@@ -263,9 +273,11 @@ export async function saveStoryAction(
   }
 
   revalidatePath("/admin/stories");
+  revalidatePath(`/admin/stories/${slug}`);
   revalidatePath("/");
   revalidatePath("/stories");
-  redirect("/admin/stories");
+  revalidatePath(`/stories/${slug}`);
+  redirect(`/admin/stories/${slug}?saved=1`);
 }
 
 export async function deleteStoryAction(formData: FormData) {

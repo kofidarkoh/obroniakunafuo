@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye, Pencil, Plus } from "lucide-react";
+import { CheckCircle2, Eye, Pencil, Plus } from "lucide-react";
 import { deleteStoryAction } from "@/app/admin-actions";
 import { DeleteButton } from "@/components/admin/delete-button";
 import {
@@ -17,8 +17,15 @@ const statusStyles: Record<string, string> = {
   published: "bg-mint text-moss",
 };
 
-export default async function AdminStoriesPage() {
-  const stories = await listAdminStories();
+export default async function AdminStoriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string }>;
+}) {
+  const [{ saved }, stories] = await Promise.all([
+    searchParams,
+    listAdminStories(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -37,6 +44,16 @@ export default async function AdminStoriesPage() {
           </Link>
         }
       />
+
+      {saved ? (
+        <p
+          role="status"
+          className="flex items-center gap-2 rounded-lg border border-moss/20 bg-mint px-4 py-3 text-[12px] font-medium text-moss"
+        >
+          <CheckCircle2 className="size-4" aria-hidden="true" />
+          Story saved.
+        </p>
+      ) : null}
 
       <AdminCard>
         {stories.length === 0 ? (

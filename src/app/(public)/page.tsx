@@ -32,8 +32,8 @@ import {
   trustPoints,
   type Programme,
 } from "@/lib/site";
-import { listProgrammes } from "@/lib/data/content";
-import { cn } from "@/lib/utils";
+import { listProgrammes, listStories } from "@/lib/data/content";
+import { cn, formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Restoring hope, dignity and love",
@@ -98,19 +98,15 @@ export default async function HomePage() {
   const featuredProgrammes = homeProgrammeOrder
     .map((slug) => programmes.find((programme) => programme.slug === slug))
     .filter((programme): programme is Programme => Boolean(programme));
+  const latestStories = (await listStories()).slice(0, 3);
 
   return (
     <>
       {/* Hero */}
       <section className="relative overflow-hidden bg-green text-white">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_78%_10%,#3A0C8F_0%,#240566_38%,#12013A_66%,#0B0122_100%)]"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -left-40 top-1/3 size-[420px] rounded-full bg-purple/20 blur-[120px]"
-        />
+<div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_78%_10%,#2A7C13_0%,#133c08_40%,#091f04_70%,#030b01_100%)]" /> 
+<div aria-hidden="true" className="pointer-events-none absolute -left-40 top-1/3 size-[420px] rounded-full bg-lime-500/10 blur-[120px]" />
+
 
         <div className="container-oak relative py-12 sm:py-14 lg:py-16">
           <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
@@ -352,6 +348,65 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Latest stories */}
+      {latestStories.length > 0 ? (
+        <section className="bg-paper py-16 sm:py-20">
+          <div className="container-oak">
+            <SectionHeading
+              eyebrow="From the field"
+              title="Latest stories"
+              description="Updates from the communities and programmes you support."
+              action={
+                <Link
+                  href="/stories#lives-changed"
+                  className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-grass hover:text-forest"
+                >
+                  All stories
+                  <ArrowRight className="size-3.5" aria-hidden="true" />
+                </Link>
+              }
+            />
+
+            <div className="mt-10 grid gap-4 md:grid-cols-3">
+              {latestStories.map((story) => (
+                <article
+                  key={story.slug}
+                  className="group flex flex-col overflow-hidden rounded-[16px] border border-line bg-white"
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden bg-mint">
+                    <Image
+                      src={story.image}
+                      alt={story.imageAlt}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col p-5">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-grass">
+                      {story.category} · {formatDate(story.date)}
+                    </p>
+                    <h3 className="mt-2 text-[15px] font-semibold leading-snug text-ink">
+                      {story.title}
+                    </h3>
+                    <p className="mt-2 line-clamp-2 text-[11.5px] leading-relaxed text-body">
+                      {story.excerpt}
+                    </p>
+                    <Link
+                      href={`/stories/${story.slug}`}
+                      className="mt-auto inline-flex items-center gap-1 pt-4 text-[11px] font-semibold text-grass hover:text-forest"
+                    >
+                      Read story
+                      <ArrowRight className="size-3" aria-hidden="true" />
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {/* Trust */}
       <section className="bg-[#F2F0F9] py-16 sm:py-20">

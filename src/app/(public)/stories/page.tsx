@@ -30,11 +30,11 @@ import {
   expenditure,
   expenditureRows,
   incomeReceived,
-  livesChanged,
   org,
   storiesTestimonials,
 } from "@/lib/site";
-import { cn, formatGhc } from "@/lib/utils";
+import { listStories } from "@/lib/data/content";
+import { cn, formatDate, formatGhc } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Stories & impact",
@@ -75,7 +75,16 @@ const tabs = [
   { label: "Annual report", href: "#annual", active: false },
 ] as const;
 
-export default function StoriesPage() {
+function storyTone(category: string): "mint" | "blue" | "amber" | "purple" {
+  if (category === "Education") return "blue";
+  if (category === "Health") return "amber";
+  if (category === "Community") return "mint";
+  return "purple";
+}
+
+export default async function StoriesPage() {
+  const stories = await listStories();
+
   return (
     <>
       {/* Hero */}
@@ -486,63 +495,58 @@ export default function StoriesPage() {
           <Eyebrow>Success stories</Eyebrow>
           <h2 className="display-2 mt-4">Lives that have been changed</h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-body">
-            These are placeholder stories — structured and ready to be replaced
-            with real beneficiary stories and photographs provided by Obroni
-            Akunafo Kuo.
+            Real stories from the widows, children and communities your support
+            reaches across the Ahafo Region.
           </p>
 
-          <div className="mt-9 grid gap-5 md:grid-cols-3">
-            {livesChanged.map((story) => (
-              <article
-                key={story.slug}
-                className="flex flex-col overflow-hidden rounded-[14px] border border-line bg-white"
-              >
-                <div className="relative aspect-[4/3] overflow-hidden bg-mint">
-                  <Image
-                    src={story.image}
-                    alt={`${story.name} — ${story.tag}`}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover"
-                  />
-                  <span className="absolute bottom-3 left-3 rounded bg-white/95 px-2 py-1 text-[8px] font-semibold uppercase tracking-[0.12em] text-ink">
-                    {story.tag}
-                  </span>
-                </div>
-                <div className="flex flex-1 flex-col p-5">
-                  <Badge
-                    tone={
-                      story.accent === "green"
-                        ? "mint"
-                        : story.accent === "orange"
-                          ? "amber"
-                          : "blue"
-                    }
-                  >
-                    {story.programme}
-                  </Badge>
-                  <h3 className="mt-2.5 text-[15px] font-semibold text-ink">
-                    {story.name}
-                  </h3>
-                  <p className="text-[10.5px] text-muted">{story.meta}</p>
-                  <Quote
-                    className="mt-4 size-3.5 text-grass"
-                    aria-hidden="true"
-                  />
-                  <p className="mt-2 text-[11.5px] italic leading-relaxed text-body">
-                    {story.quote}
-                  </p>
-                  <Link
-                    href={`/stories/${story.slug}`}
-                    className="mt-auto inline-flex items-center gap-1 pt-4 text-[11px] font-semibold text-grass hover:text-forest"
-                  >
-                    Read full story
-                    <ArrowRight className="size-3" aria-hidden="true" />
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
+          {stories.length === 0 ? (
+            <p className="mt-9 rounded-[14px] border border-dashed border-line bg-white px-6 py-12 text-center text-sm text-muted">
+              New stories will appear here once they are published.
+            </p>
+          ) : (
+            <div className="mt-9 grid gap-5 md:grid-cols-3">
+              {stories.map((story) => (
+                <article
+                  key={story.slug}
+                  className="group flex flex-col overflow-hidden rounded-[14px] border border-line bg-white"
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden bg-mint">
+                    <Image
+                      src={story.image}
+                      alt={story.imageAlt}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                    <span className="absolute bottom-3 left-3 rounded bg-white/95 px-2 py-1 text-[8px] font-semibold uppercase tracking-[0.12em] text-ink">
+                      {story.category}
+                    </span>
+                  </div>
+                  <div className="flex flex-1 flex-col p-5">
+                    <Badge tone={storyTone(story.category)}>
+                      {story.programmes[0] ?? story.category}
+                    </Badge>
+                    <h3 className="mt-2.5 text-[15px] font-semibold leading-snug text-ink">
+                      {story.title}
+                    </h3>
+                    <p className="mt-1 text-[10.5px] text-muted">
+                      {formatDate(story.date)} · {story.location}
+                    </p>
+                    <p className="mt-3 line-clamp-3 text-[11.5px] leading-relaxed text-body">
+                      {story.excerpt}
+                    </p>
+                    <Link
+                      href={`/stories/${story.slug}`}
+                      className="mt-auto inline-flex items-center gap-1 pt-4 text-[11px] font-semibold text-grass hover:text-forest"
+                    >
+                      Read full story
+                      <ArrowRight className="size-3" aria-hidden="true" />
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

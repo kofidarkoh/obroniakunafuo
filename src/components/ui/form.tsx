@@ -41,7 +41,9 @@ export function Field({
       ) : null}
       {children}
       {error ? (
-        <p className="text-xs font-medium text-coral">{error}</p>
+        <p role="alert" className="text-xs font-medium text-coral">
+          {error}
+        </p>
       ) : hint ? (
         <p className="text-xs text-muted">{hint}</p>
       ) : null}

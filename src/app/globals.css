@@ -26,8 +26,14 @@
   --color-purple: #6330d3;
   --color-purple-bright: #582cc0;
   --color-violet: #9a69eb;
+  --color-violet-soft: #b39bf5;
   --color-plum: #19024f;
   --color-plum-deep: #0b0122;
+
+  /* Tints for accent text on dark surfaces */
+  --color-grass-bright: #4caf50;
+  --color-gold-bright: #e8a33d;
+  --color-blue-bright: #8db2ff;
 
   --color-paper: #f6f5f2;
   --color-cream: #faf9f8;

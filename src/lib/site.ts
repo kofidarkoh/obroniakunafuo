@@ -99,12 +99,13 @@ export const programmes: Programme[] = [
     summary:
       "Nutritious food parcels and emergency relief for households facing hunger.",
     description:
-      "Hunger is often the first crisis a family faces. Our food support programme delivers monthly parcels and emergency relief to widows, orphans, persons with disabilities and the aged — meeting an immediate need while we work on lasting solutions.",
+      "No one in our communities should go to bed hungry. Our food support programme provides regular food relief to widows, orphans, the aged and persons with disabilities across the Ahafo Region — ensuring that the most vulnerable have access to basic nutrition and essential supplies.",
     bullets: [
-      "Monthly food parcels for widows, orphans and the aged",
-      "Emergency relief for families in crisis",
-      "Support for persons with disabilities and their carers",
-      "Community meals during festive and hardship periods",
+      "Regular food packages for widows and elderly women",
+      "Clothing and essential household items distribution",
+      "Seasonal outreach and festive relief programmes",
+      "Community partnerships with churches and local leaders",
+      "Dedicated support for Persons With Disabilities",
     ],
     cta: "Support this programme",
     meta: "800+ households · Monthly relief",
@@ -123,12 +124,12 @@ export const programmes: Programme[] = [
     summary:
       "School fees, uniforms, books and mentoring so children can stay in school.",
     description:
-      "Education is the surest route out of poverty. We sponsor children from vulnerable households through school and apprenticeship, covering the costs that so often force families to choose between food and fees.",
+      "Education is the most powerful tool we can give a child. Our education programme sponsors orphans and vulnerable children — covering school fees, uniforms, books and learning materials — to ensure that losing a parent does not mean losing the future.",
     bullets: [
-      "School fees and examination registration",
-      "Uniforms, books and scholastic materials",
-      "Mentoring and holiday study support",
-      "Apprenticeship and skills sponsorship",
+      "School fees sponsorship for orphans and vulnerable children",
+      "School uniforms, books and stationery provision",
+      "Mentorship and academic support for sponsored students",
+      "Recognition and encouragement for academic achievement",
     ],
     cta: "Support a child's education",
     meta: "50+ students · Fees, kits & mentoring",
@@ -147,12 +148,13 @@ export const programmes: Programme[] = [
     summary:
       "Medical outreach, home visits, medication and companionship for those who cannot reach care.",
     description:
-      "For many families in the Ahafo Region, the nearest clinic is far and the cost is out of reach. Our health programme brings screening, medication and compassionate home visits to people who would otherwise go without.",
+      "Good health is a right, not a privilege. Our healthcare support programme provides medical assistance, home visits and health outreach to widows, the aged and persons with disabilities — many of whom cannot easily access healthcare facilities on their own.",
     bullets: [
-      "Community medical outreach and screening",
-      "Home visits for the aged and persons with disabilities",
-      "Medication and treatment support",
-      "Disability inclusion and companionship",
+      "Medical outreach and health screening visits",
+      "Home visits and psychosocial support for the aged",
+      "Medication access and healthcare referrals",
+      "Disability inclusion and support for 200+ PWDs across Ahafo",
+      "Companionship and wellbeing programmes for the elderly",
     ],
     cta: "Support healthcare access",
     meta: "GHC 85,198 · Medical support",
@@ -171,12 +173,12 @@ export const programmes: Programme[] = [
     summary:
       "Safe, dignified housing through repairs, roofing and emergency shelter.",
     description:
-      "A leaking roof or a collapsed wall can undo years of progress. We repair and improve homes for widows, the aged and families caring for persons with disabilities, and we respond when disaster leaves someone without a safe place to sleep.",
+      "A safe home is the foundation of a dignified life. Our shelter support programme assists widows and vulnerable elderly community members with basic home repairs, maintenance and emergency shelter provisions — ensuring that no one faces the rainy season without a safe roof.",
     bullets: [
-      "Emergency home repairs and roofing",
-      "Safe shelter for displaced families",
-      "Accessibility adaptations for persons with disabilities",
-      "Essential household equipment",
+      "Basic home repairs and structural maintenance",
+      "Roof repairs and weatherproofing for vulnerable households",
+      "Emergency shelter support and temporary accommodation",
+      "Targeting households most at risk across the Ahafo Region",
     ],
     cta: "Support shelter access",
     meta: "Repairs · Roofing · Emergency shelter",
@@ -236,22 +238,22 @@ export const approach = [
   {
     step: "01",
     title: "Identify",
-    body: "We work with community leaders, chiefs and assembly members to find the households most at risk.",
+    body: "We work with community leaders and churches to identify the most vulnerable individuals who need support.",
   },
   {
     step: "02",
     title: "Connect",
-    body: "We listen to each family, assess their needs and connect them to the right programme.",
+    body: "We build personal relationships with each beneficiary — because care is never just about material support.",
   },
   {
     step: "03",
     title: "Support",
-    body: "We deliver food, education, healthcare or shelter support with dignity and consistency.",
+    body: "We deliver food, education, healthcare and shelter support — consistently and with dignity at the centre.",
   },
   {
     step: "04",
     title: "Follow through",
-    body: "We stay in contact, review progress and help families move towards independence.",
+    body: "We stay engaged — visiting homes, following up on sponsored children, and continuing relationships over time.",
   },
 ] as const;
 
