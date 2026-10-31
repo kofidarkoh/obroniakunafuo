@@ -15,7 +15,7 @@ export function SubmissionStatusActions({
           <input type="hidden" name="status" value="reviewed" />
           <button
             type="submit"
-            className="rounded-md bg-grass px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-moss"
+            className="rounded-md bg-emblem px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-forest-800"
           >
             Mark reviewed
           </button>

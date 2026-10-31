@@ -24,6 +24,7 @@ export const metadata: Metadata = {
   title: "About us",
   description:
     "Founded in 2016 by Mr. Bernard Adu Tutu, Obroni Akunafo Kuo is a registered Ghanaian NGO restoring dignity and hope to widows, orphans, persons with disabilities and the aged in the Ahafo Region.",
+  alternates: { canonical: "/about" },
 };
 
 const aboutStats = [

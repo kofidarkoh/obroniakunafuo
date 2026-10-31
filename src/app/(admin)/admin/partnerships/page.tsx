@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Building2 } from "lucide-react";
-import { setPartnershipStatusAction } from "@/app/admin-actions";
+import { setPartnershipStatusAction, deletePartnershipAction } from "@/app/admin-actions";
+import { DeleteButton } from "@/components/admin/delete-button";
 import { SubmissionStatusActions } from "@/components/admin/status-actions";
 import {
   AdminCard,
@@ -163,11 +164,18 @@ export default async function AdminPartnershipsPage({
                     Reply by email
                   </a>
                 </div>
-                <SubmissionStatusActions
-                  id={enquiry.id}
-                  status={enquiry.status}
-                  action={setPartnershipStatusAction}
-                />
+                <div className="flex items-center gap-2">
+                  <SubmissionStatusActions
+                    id={enquiry.id}
+                    status={enquiry.status}
+                    action={setPartnershipStatusAction}
+                  />
+                  <DeleteButton
+                    action={deletePartnershipAction}
+                    slug={enquiry.id}
+                    label="Delete"
+                  />
+                </div>
               </div>
             </AdminCard>
           ))}

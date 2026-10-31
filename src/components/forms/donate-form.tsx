@@ -54,7 +54,7 @@ function StepHeader({ title, step }: { title: string; step: string }) {
       <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted">
         {title}
       </h2>
-      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-purple">
+      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-emblem">
         {step}
       </span>
     </div>
@@ -106,10 +106,10 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                     className={cn(
                       "flex size-9 items-center justify-center rounded-full border text-[12px] font-semibold transition-colors",
                       isActive &&
-                        "border-purple bg-purple text-white",
+                        "border-emblem bg-emblem text-white",
                       isDone &&
                         !isActive &&
-                        "border-purple/40 bg-white text-purple",
+                        "border-emblem/40 bg-white text-emblem",
                       !isActive &&
                         !isDone &&
                         "border-line bg-white text-muted",
@@ -124,7 +124,7 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                   <span
                     className={cn(
                       "text-[10.5px] font-medium",
-                      isActive ? "text-purple" : "text-muted",
+                      isActive ? "text-emblem" : "text-muted",
                     )}
                   >
                     {step.label}
@@ -134,7 +134,7 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                   <span
                     className={cn(
                       "mb-5 h-px w-8 sm:w-16",
-                      activeStep > step.n ? "bg-purple/40" : "bg-line",
+                      activeStep > step.n ? "bg-emblem/40" : "bg-line",
                     )}
                   />
                 ) : null}
@@ -165,7 +165,7 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                     className={cn(
                       "h-11 rounded-[6px] text-[13.5px] transition-colors",
                       frequency === option.value
-                        ? "bg-white font-semibold text-purple shadow-sm"
+                        ? "bg-white font-semibold text-emblem shadow-sm"
                         : "text-body hover:text-ink",
                     )}
                   >
@@ -197,8 +197,8 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                       className={cn(
                         "rounded-[8px] border px-3 py-4 text-center transition-colors",
                         selected
-                          ? "border-purple bg-purple text-white"
-                          : "border-line bg-white text-ink hover:border-purple/40",
+                          ? "border-emblem bg-emblem text-white"
+                          : "border-line bg-white text-ink hover:border-emblem/40",
                       )}
                     >
                       <span className="block text-[16px] font-medium">
@@ -241,7 +241,7 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                     setActiveStep(1);
                   }}
                   placeholder="enter an amount"
-                  className="h-12 w-full rounded-[8px] border border-line bg-white pl-14 pr-4 text-[13px] text-ink placeholder:text-muted/60 focus:border-purple focus:outline-none focus:ring-2 focus:ring-purple/15"
+                  className="h-12 w-full rounded-[8px] border border-line bg-white pl-14 pr-4 text-[13px] text-ink placeholder:text-muted/60 focus:border-emblem focus:outline-none focus:ring-2 focus:ring-emblem/15"
                 />
               </div>
               {errors.amount?.[0] ? (
@@ -380,8 +380,8 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-[10px] bg-[#F2EFFB] p-5">
-                    <p className="text-[13px] font-medium leading-snug text-purple">
+                  <div className="mt-4 rounded-[10px] bg-mint p-5">
+                    <p className="text-[13px] font-medium leading-snug text-emblem">
                       How to send via MTN MoMo
                     </p>
                     <ol className="mt-4 space-y-3.5">
@@ -411,7 +411,7 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                           key={index}
                           className="flex items-start gap-3 text-[11px] leading-relaxed text-body"
                         >
-                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-purple text-[9px] font-bold text-white">
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-emblem text-[9px] font-bold text-white">
                             {String(index + 1).padStart(2, "0")}
                           </span>
                           <span>{content}</span>
@@ -427,7 +427,7 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                   </p>
                   <div className="mt-2 rounded-[8px] border border-line bg-white p-5">
                     <div className="flex items-center gap-3">
-                      <span className="flex size-11 items-center justify-center rounded-[6px] bg-purple text-[11px] font-bold text-white">
+                      <span className="flex size-11 items-center justify-center rounded-[6px] bg-emblem text-[11px] font-bold text-white">
                         {payment.bankName.slice(0, 3).toUpperCase()}
                       </span>
                       <p className="text-[15px] font-medium text-ink">
@@ -492,7 +492,7 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                 type="submit"
                 disabled={pending}
                 onClick={() => setActiveStep(4)}
-                className="mt-5 flex h-13 w-full items-center justify-center gap-2 rounded-[8px] bg-purple py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-purple-deep disabled:pointer-events-none disabled:opacity-60"
+                className="mt-5 flex h-13 w-full items-center justify-center gap-2 rounded-[8px] bg-lime py-3.5 text-[15px] font-semibold text-forest transition-colors hover:bg-grass hover:text-white disabled:pointer-events-none disabled:opacity-60"
               >
                 {pending ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -542,14 +542,14 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                 </div>
                 <div className="flex items-center justify-between gap-4 pt-1">
                   <dt className="text-[12px] font-medium text-ink">Total</dt>
-                  <dd className="text-xl font-semibold text-purple">
+                  <dd className="text-xl font-semibold text-emblem">
                     {money(amount || 0)}
                   </dd>
                 </div>
               </dl>
             </div>
 
-            <div className="mt-4 rounded-[10px] bg-purple p-5 text-white">
+            <div className="mt-4 rounded-[10px] bg-emblem p-5 text-white">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
                 Your donation supports
               </p>
@@ -594,7 +594,7 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                   ["Annual", "Independent audit"],
                 ].map(([value, label]) => (
                   <div key={label} className="rounded-[6px] bg-paper p-3">
-                    <p className="text-[15px] font-semibold text-purple">
+                    <p className="text-[15px] font-semibold text-emblem">
                       {value}
                     </p>
                     <p className="mt-0.5 text-[9.5px] leading-snug text-muted">
@@ -630,7 +630,7 @@ export function DonateForm({ payment }: { payment: PaymentDetails }) {
                   const Icon = item.icon;
                   return (
                     <li key={item.title} className="flex items-start gap-3">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-[6px] bg-[#F2EFFB] text-purple">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-[6px] bg-mint text-emblem">
                         <Icon className="size-3.5" aria-hidden="true" />
                       </span>
                       <span>

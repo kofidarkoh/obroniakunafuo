@@ -12,7 +12,7 @@ import {
   StatusPill,
   formatDateTime,
 } from "@/components/admin/ui";
-import { listContacts, listNotes } from "@/lib/data/store";
+import { getContact, listNotes } from "@/lib/data/store";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -21,12 +21,11 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function MessageDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const messages = await listContacts();
-  const message = messages.find((item) => item.id === id);
+  const message = await getContact(id);
 
   if (!message) notFound();
 
-  const notes = await listNotes("contacts", id);
+  const notes = message.notes && message.notes.length ? message.notes : await listNotes("contacts", id);
 
   return (
     <div className="space-y-6">
@@ -113,7 +112,7 @@ export default async function MessageDetailPage({ params }: PageProps) {
               />
               <button
                 type="submit"
-                className="rounded-lg bg-grass px-4 py-2.5 text-[11.5px] font-semibold text-white hover:bg-moss"
+                className="rounded-lg bg-emblem px-4 py-2.5 text-[11.5px] font-semibold text-white hover:bg-forest-800"
               >
                 Add note
               </button>

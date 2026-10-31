@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { setVolunteerStatusAction } from "@/app/admin-actions";
+import { setVolunteerStatusAction, deleteVolunteerAction } from "@/app/admin-actions";
+import { DeleteButton } from "@/components/admin/delete-button";
 import { SubmissionStatusActions } from "@/components/admin/status-actions";
 import {
   AdminCard,
@@ -179,11 +180,18 @@ export default async function AdminVolunteersPage({
                     Contact applicant
                   </a>
                 </div>
-                <SubmissionStatusActions
-                  id={application.id}
-                  status={application.status}
-                  action={setVolunteerStatusAction}
-                />
+                <div className="flex items-center gap-2">
+                  <SubmissionStatusActions
+                    id={application.id}
+                    status={application.status}
+                    action={setVolunteerStatusAction}
+                  />
+                  <DeleteButton
+                    action={deleteVolunteerAction}
+                    slug={application.id}
+                    label="Delete"
+                  />
+                </div>
               </div>
             </AdminCard>
           ))}

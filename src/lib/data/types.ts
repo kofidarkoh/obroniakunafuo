@@ -33,6 +33,7 @@ export type Donation = {
   confirmedAt?: string;
   acknowledgedAt?: string;
   acknowledgedBy?: string;
+  notes?: AdminNote[];
 };
 
 export type VolunteerApplication = {
@@ -110,6 +111,19 @@ export type Notification = {
   content: string;
   date: string;
   status: NotificationStatus;
+  createdAt: string;
+};
+
+export type GalleryStatus = "draft" | "published";
+
+export type GalleryItem = {
+  slug: string;
+  title: string;
+  image: string;
+  imageAlt: string;
+  caption: string;
+  category: string;
+  status: GalleryStatus;
   createdAt: string;
 };
 

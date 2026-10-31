@@ -103,6 +103,64 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
 
       <section className="border-t border-line pt-6">
         <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted">
+          SEO &amp; search visibility
+        </h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Site title"
+            icon={ExternalLink}
+            htmlFor="settingsSeoTitle"
+            hint="Shown in browser tabs and Google results"
+            className="sm:col-span-2"
+          >
+            <Input
+              id="settingsSeoTitle"
+              name="seoTitle"
+              defaultValue={settings.seoTitle}
+            />
+          </Field>
+          <Field
+            label="Site description"
+            icon={ExternalLink}
+            htmlFor="settingsSeoDescription"
+            hint="Shown in Google snippets and social previews"
+            className="sm:col-span-2"
+          >
+            <Input
+              id="settingsSeoDescription"
+              name="seoDescription"
+              defaultValue={settings.seoDescription}
+            />
+          </Field>
+          <Field
+            label="Open Graph image path"
+            icon={ExternalLink}
+            htmlFor="settingsOgImage"
+            hint="Relative path like /images/hero-community.jpg"
+          >
+            <Input
+              id="settingsOgImage"
+              name="ogImage"
+              defaultValue={settings.ogImage}
+            />
+          </Field>
+          <Field
+            label="Google site verification"
+            icon={ExternalLink}
+            htmlFor="settingsGoogleSiteVerification"
+            hint="Paste the content value from Google Search Console"
+          >
+            <Input
+              id="settingsGoogleSiteVerification"
+              name="googleSiteVerification"
+              defaultValue={settings.googleSiteVerification}
+            />
+          </Field>
+        </div>
+      </section>
+
+      <section className="border-t border-line pt-6">
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted">
           Notifications
         </h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -121,7 +179,7 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex h-10 items-center gap-2 rounded-lg bg-grass px-5 text-[12.5px] font-semibold text-white hover:bg-moss disabled:opacity-60"
+          className="inline-flex h-10 items-center gap-2 rounded-lg bg-emblem px-5 text-[12.5px] font-semibold text-white hover:bg-forest-800 disabled:opacity-60"
         >
           {pending ? (
             <Loader2 className="size-4 animate-spin" aria-hidden="true" />

@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Terms of use",
   description:
     "Terms governing use of the Obroni Akunafo Kuo website, donations and submissions.",
+  alternates: { canonical: "/terms" },
 };
 
 const sections = [

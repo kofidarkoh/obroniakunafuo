@@ -55,6 +55,7 @@ export const nav = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
   { label: "Programmes", href: "/programmes" },
+  { label: "Gallery", href: "/gallery" },
   { label: "Get Involved", href: "/get-involved" },
   { label: "Stories", href: "/stories" },
 ] as const;
@@ -656,10 +657,5 @@ export const partnerDocuments = [
     title: "Constitution",
     body: "The governing rules and structure of Obroni Akunafo Kuo.",
     href: "/documents/constitution.pdf",
-  },
-  {
-    title: "Annual Reports",
-    body: "Audited accounts and programme results, year by year.",
-    href: "/documents/annual-report.pdf",
   },
 ] as const;

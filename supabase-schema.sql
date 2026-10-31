@@ -146,6 +146,34 @@ create policy "Admins can manage notifications"
   using (true);
 
 -- --------------------------------------------------------
+-- gallery
+-- --------------------------------------------------------
+
+create table if not exists gallery (
+  slug text primary key,
+  title text not null,
+  image text not null,
+  image_alt text,
+  caption text,
+  category text,
+  status text check (status in ('draft', 'published')) not null default 'draft',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_gallery_status on gallery(status);
+create index if not exists idx_gallery_created on gallery(created_at desc);
+
+alter table gallery enable row level security;
+
+create policy "Public can read published gallery"
+  on gallery for select
+  using (status = 'published');
+
+create policy "Admins can manage gallery"
+  on gallery for all
+  using (true);
+
+-- --------------------------------------------------------
 -- storage: site-images bucket
 -- --------------------------------------------------------
 
@@ -176,6 +204,26 @@ create table if not exists notes (
   text text not null,
   created_at timestamptz not null default now()
 );
+
+-- --------------------------------------------------------
+-- admin audit log
+-- --------------------------------------------------------
+
+create table if not exists admin_audit_log (
+  id uuid primary key default uuid_generate_v4(),
+  actor text not null,
+  action text not null,
+  entity_type text not null,
+  entity_id text not null,
+  before_summary text,
+  after_summary text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_admin_audit_log_created_at
+  on admin_audit_log(created_at desc);
+create index if not exists idx_admin_audit_log_entity
+  on admin_audit_log(entity_type, entity_id);
 
 -- --------------------------------------------------------
 -- indexes for common queries
@@ -220,6 +268,27 @@ create policy "Public can read settings"
   on settings for select
   using (true);
 
+create policy "Public can read published notifications"
+  on notifications for select
+  using (status = 'published');
+
+-- Public can submit enquiry/donation forms
+create policy "Public can insert contacts"
+  on contacts for insert
+  with check (true);
+
+create policy "Public can insert donations"
+  on donations for insert
+  with check (true);
+
+create policy "Public can insert volunteers"
+  on volunteers for insert
+  with check (true);
+
+create policy "Public can insert partnerships"
+  on partnerships for insert
+  with check (true);
+
 -- Admin write access (requires authenticated admin role)
 -- In production, restrict these to your admin users via JWT claims
 create policy "Admins can manage donations"
@@ -253,6 +322,16 @@ create policy "Admins can manage settings"
 create policy "Admins can manage notes"
   on notes for all
   using (true);
+
+alter table admin_audit_log enable row level security;
+
+create policy "Admins can manage audit log"
+  on admin_audit_log for all
+  using (true);
+
+create policy "Public can read audit log"
+  on admin_audit_log for select
+  using (false);
 
 -- --------------------------------------------------------
 -- Seed settings with defaults

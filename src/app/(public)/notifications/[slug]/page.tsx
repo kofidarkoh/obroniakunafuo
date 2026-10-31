@@ -28,6 +28,7 @@ export const generateMetadata = async ({
       template: "%s | Obroni Akunafo Kuo",
     },
     description: notification.summary,
+    alternates: { canonical: `/notifications/${slug}` },
     openGraph: {
       type: "article",
       locale: "en_GH",
@@ -73,9 +74,7 @@ export default async function NotificationPage({
     );
   }
 
-  const paragraphs = notification.content
-    .split("\n\n")
-    .filter((p: string) => p.trim().length > 0);
+  const isHtml = /<\/?[a-z][\s\S]*>/i.test(notification.content);
 
   return (
     <article className="container-oak py-16 sm:py-20">
@@ -111,11 +110,18 @@ export default async function NotificationPage({
         </div>
 
         <div className="prose prose-sm sm:prose-base lg:prose-lg text-body max-w-none">
-          {paragraphs.map((p: string, i: number) => (
-            <p key={i} className="mb-5 leading-relaxed">
-              {p}
-            </p>
-          ))}
+          {isHtml ? (
+            <div dangerouslySetInnerHTML={{ __html: notification.content }} />
+          ) : (
+            notification.content
+              .split("\n\n")
+              .filter((p: string) => p.trim().length > 0)
+              .map((p: string, i: number) => (
+                <p key={i} className="mb-5 leading-relaxed">
+                  {p}
+                </p>
+              ))
+          )}
         </div>
       </div>
     </article>

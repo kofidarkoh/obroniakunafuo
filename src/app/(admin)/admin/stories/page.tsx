@@ -5,27 +5,48 @@ import { DeleteButton } from "@/components/admin/delete-button";
 import {
   AdminCard,
   AdminPageHeader,
+  AdminSearchForm,
   EmptyState,
 } from "@/components/admin/ui";
-import { listAdminStories } from "@/lib/data/content";
+import {
+  listAdminStories,
+  listAdminStoriesPaginated,
+} from "@/lib/data/content";
 import { cn, formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-const statusStyles: Record<string, string> = {
-  draft: "bg-paper text-muted",
-  published: "bg-mint text-moss",
+const filters = ["all", "draft", "published"] as const;
+const PAGE_SIZE = 25;
+
+type PageProps = {
+  searchParams: Promise<{
+    status?: string;
+    search?: string;
+    page?: string;
+    saved?: string;
+  }>;
 };
 
-export default async function AdminStoriesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ saved?: string }>;
-}) {
-  const [{ saved }, stories] = await Promise.all([
-    searchParams,
+export default async function AdminStoriesPage({ searchParams }: PageProps) {
+  const { status, search, page, saved } = await searchParams;
+  const active = filters.includes(status as (typeof filters)[number])
+    ? (status as (typeof filters)[number])
+    : "all";
+  const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
+
+  const [{ items, total }, allStories] = await Promise.all([
+    listAdminStoriesPaginated({
+      page: currentPage,
+      pageSize: PAGE_SIZE,
+      search,
+      status: active,
+    }),
     listAdminStories(),
   ]);
+
+  const pageCount = Math.ceil(total / PAGE_SIZE);
+  const hasFilters = Boolean(search) || active !== "all";
 
   return (
     <div className="space-y-6">
@@ -37,7 +58,7 @@ export default async function AdminStoriesPage({
         action={
           <Link
             href="/admin/stories/new"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-grass px-4 text-[12px] font-semibold text-white hover:bg-moss"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emblem px-4 text-[12px] font-semibold text-white hover:bg-forest-800"
           >
             <Plus className="size-3.5" aria-hidden="true" />
             New story
@@ -55,18 +76,67 @@ export default async function AdminStoriesPage({
         </p>
       ) : null}
 
+      <div className="flex flex-wrap items-center gap-3 border-b border-line pb-4">
+        <AdminSearchForm
+          action="/admin/stories"
+          placeholder="Search title, slug, category…"
+          defaultValue={search}
+          hidden={{ status: active }}
+        />
+        {filters.map((filter) => (
+          <Link
+            key={filter}
+            href={
+              filter === "all"
+                ? `/admin/stories?search=${search ?? ""}&page=1`
+                : `/admin/stories?status=${filter}&search=${search ?? ""}&page=1`
+            }
+            className={cn(
+              "rounded-lg px-3 py-1.5 text-[11.5px] capitalize transition-colors",
+              active === filter
+                ? "bg-ink font-semibold text-white"
+                : "text-muted hover:bg-paper hover:text-ink",
+            )}
+          >
+            {filter}
+            <span className="ml-1.5 text-[9.5px] opacity-60">
+              {filter === "all"
+                ? allStories.length
+                : allStories.filter((item) => item.status === filter).length}
+            </span>
+          </Link>
+        ))}
+        {hasFilters ? (
+          <Link
+            href="/admin/stories"
+            className="text-[11px] font-medium text-grass hover:text-forest"
+          >
+            Clear filters
+          </Link>
+        ) : null}
+      </div>
+
       <AdminCard>
-        {stories.length === 0 ? (
+        {items.length === 0 ? (
           <EmptyState
-            title="No stories yet"
-            description="Create your first story to share impact with supporters."
+            title="No stories in this view"
+            description="Stories submitted through the admin console will appear here."
             action={
-              <Link
-                href="/admin/stories/new"
-                className="text-[11px] font-semibold text-grass"
-              >
-                Create a story
-              </Link>
+              hasFilters ? (
+                <Link
+                  href="/admin/stories"
+                  className="text-[11px] font-semibold text-grass"
+                >
+                  Clear filters
+                </Link>
+              ) : (
+                <Link
+                  href="/admin/stories/new"
+                  className="text-[11px] font-semibold text-grass"
+                >
+                  Create a story
+                </Link>
+              )
             }
           />
         ) : (
@@ -83,7 +153,7 @@ export default async function AdminStoriesPage({
                 </tr>
               </thead>
               <tbody>
-                {stories.map((story) => (
+                {items.map((story) => (
                   <tr
                     key={story.slug}
                     className="border-b border-line/70 last:border-0"
@@ -103,7 +173,9 @@ export default async function AdminStoriesPage({
                       <span
                         className={cn(
                           "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-semibold capitalize",
-                          statusStyles[story.status] ?? "bg-paper text-muted",
+                          story.status === "published"
+                            ? "bg-mint text-moss"
+                            : "bg-paper text-muted",
                         )}
                       >
                         <span className="size-1 rounded-full bg-current" />
@@ -148,6 +220,35 @@ export default async function AdminStoriesPage({
           </div>
         )}
       </AdminCard>
+
+      {pageCount > 1 && (
+        <div className="flex items-center justify-between gap-4 border-t border-line pt-4">
+          <p className="text-[10px] text-muted">
+            Showing {items.length} of {total} stories
+          </p>
+          <div className="flex items-center gap-1">
+            {currentPage > 1 && (
+              <Link
+                href={`/admin/stories?status=${active}&search=${search ?? ""}&page=${currentPage - 1}`}
+                className="rounded-lg px-3 py-1.5 border border-line text-[11.5px] hover:bg-paper"
+              >
+                Prev
+              </Link>
+            )}
+            <span className="px-3 py-1.5 text-[11px] text-muted">
+              Page {currentPage} of {pageCount}
+            </span>
+            {currentPage < pageCount && (
+              <Link
+                href={`/admin/stories?status=${active}&search=${search ?? ""}&page=${currentPage + 1}`}
+                className="rounded-lg px-3 py-1.5 border border-line text-[11.5px] hover:bg-paper"
+              >
+                Next
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -28,6 +28,7 @@ export const metadata: Metadata = {
       "Latest news, announcements and updates from Obroni Akunafo Kuo.",
   },
   robots: { index: true, follow: true },
+  alternates: { canonical: "/notifications" },
 };
 
 export default async function NotificationsPage() {

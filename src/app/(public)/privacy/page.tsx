@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Privacy policy",
   description:
     "How Obroni Akunafo Kuo collects, uses and protects personal information.",
+  alternates: { canonical: "/privacy" },
 };
 
 const sections = [

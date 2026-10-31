@@ -25,6 +25,7 @@ export const metadata: Metadata = {
   title: "Contact us",
   description:
     "Get in touch with Obroni Akunafo Kuo. Call, email or send us a message — we aim to respond within 2–3 working days.",
+  alternates: { canonical: "/contact" },
 };
 
 const orgInfo = [

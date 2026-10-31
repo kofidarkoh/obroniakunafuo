@@ -25,6 +25,7 @@ export const metadata: Metadata = {
   title: "Get involved",
   description:
     "Donate, volunteer, partner with us or join the team at Obroni Akunafo Kuo. There is a place for everyone here.",
+  alternates: { canonical: "/get-involved" },
 };
 
 const heroCards = [

@@ -1,0 +1,16 @@
+{
+  "name": "Obroni Akunafo Kuo",
+  "short_name": "OAK",
+  "description": "Restoring hope, dignity and love to vulnerable communities in Ghana.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2E6B2E",
+  "icons": [
+    {
+      "src": "/images/oak-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

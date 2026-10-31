@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 
 export type ButtonVariant =
   | "primary"
+  | "lime"
   | "purple"
   | "orange"
   | "blue"
@@ -29,7 +30,8 @@ export function buttonStyles({
     size === "sm" && "h-9 px-4 text-[13px]",
     size === "md" && "h-11 px-5 text-sm",
     size === "lg" && "h-12 px-6 text-[15px]",
-    variant === "primary" && "bg-moss text-white hover:bg-forest",
+    variant === "primary" && "bg-emblem text-white hover:bg-forest-800",
+    variant === "lime" && "bg-lime text-forest hover:bg-grass hover:text-white",
     variant === "purple" &&
       "bg-purple-bright text-white hover:bg-purple-deep",
     variant === "orange" && "bg-orange text-white hover:bg-amber",

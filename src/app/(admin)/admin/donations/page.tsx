@@ -3,7 +3,9 @@ import { Download } from "lucide-react";
 import {
   setDonationStatusAction,
   acknowledgeDonationAction,
+  deleteDonationAction,
 } from "@/app/admin-actions";
+import { DeleteButton } from "@/components/admin/delete-button";
 import {
   AdminPageHeader,
   AdminSearchForm,
@@ -151,9 +153,12 @@ export default async function AdminDonationsPage({
                   className="border-b border-line/70 last:border-0"
                 >
                   <td className="px-5 py-3">
-                    <p className="font-medium text-ink">
+                    <Link
+                      href={`/admin/donations/${donation.id}`}
+                      className="font-medium text-ink hover:text-grass"
+                    >
                       {donation.donorName}
-                    </p>
+                    </Link>
                     <p className="text-[10px] text-muted">
                       {donation.email}
                     </p>
@@ -191,7 +196,7 @@ export default async function AdminDonationsPage({
                           <input type="hidden" name="author" value="Admin" />
                           <button
                             type="submit"
-                            className="rounded-md bg-grass px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-moss"
+                            className="rounded-md bg-emblem px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-forest-800"
                           >
                             Mark acknowledged
                           </button>
@@ -207,7 +212,7 @@ export default async function AdminDonationsPage({
                           <input type="hidden" name="status" value="confirmed" />
                           <button
                             type="submit"
-                            className="rounded-md bg-grass px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-moss"
+                            className="rounded-md bg-emblem px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-forest-800"
                           >
                             Confirm
                           </button>
@@ -236,6 +241,11 @@ export default async function AdminDonationsPage({
                           </button>
                         </form>
                       ) : null}
+                      <DeleteButton
+                        action={deleteDonationAction}
+                        slug={donation.id}
+                        label="Delete"
+                      />
                     </div>
                   </td>
                 </tr>

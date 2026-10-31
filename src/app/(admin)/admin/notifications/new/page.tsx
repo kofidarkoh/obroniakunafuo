@@ -11,6 +11,7 @@ import {
   StatusPill,
 } from "@/components/admin/ui";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import type { FormState } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 
@@ -90,15 +91,13 @@ export function NotificationForm({
       </Field>
 
       <Field label="Content" htmlFor="notificationContent" required>
-        <Textarea
-          id="notificationContent"
+        <RichTextEditor
           name="content"
           defaultValue={notification?.content ?? ""}
-          rows={10}
-          required
+          placeholder="Full announcement text…"
         />
         <p className="mt-1 text-[9.5px] text-muted">
-          Full announcement text. Use blank lines to separate paragraphs.
+          Rich text. Supports bold, italics, headings and lists.
         </p>
       </Field>
 
@@ -116,7 +115,7 @@ export function NotificationForm({
             "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-[12px] font-semibold transition-colors",
             pending
               ? "bg-muted text-muted cursor-not-allowed"
-              : "bg-grass text-white hover:bg-moss",
+              : "bg-emblem text-white hover:bg-forest-800",
           )}
         >
           {pending ? (

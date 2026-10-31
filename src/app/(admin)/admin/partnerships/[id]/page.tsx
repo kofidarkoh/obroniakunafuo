@@ -12,7 +12,7 @@ import {
   StatusPill,
   formatDateTime,
 } from "@/components/admin/ui";
-import { listPartnerships, listNotes } from "@/lib/data/store";
+import { getPartnership, listNotes } from "@/lib/data/store";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -21,12 +21,14 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function PartnershipDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const partnerships = await listPartnerships();
-  const partnership = partnerships.find((item) => item.id === id);
+  const partnership = await getPartnership(id);
 
   if (!partnership) notFound();
 
-  const notes = await listNotes("partnerships", id);
+  const notes =
+    partnership.notes && partnership.notes.length
+      ? partnership.notes
+      : await listNotes("partnerships", id);
 
   return (
     <div className="space-y-6">
@@ -100,7 +102,7 @@ export default async function PartnershipDetailPage({ params }: PageProps) {
               />
               <button
                 type="submit"
-                className="rounded-lg bg-grass px-4 py-2.5 text-[11.5px] font-semibold text-white hover:bg-moss"
+                className="rounded-lg bg-emblem px-4 py-2.5 text-[11.5px] font-semibold text-white hover:bg-forest-800"
               >
                 Add note
               </button>

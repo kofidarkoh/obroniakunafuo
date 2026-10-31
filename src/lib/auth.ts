@@ -9,7 +9,20 @@ import {
 const MOCK_COOKIE = "oak_admin_session";
 const MOCK_PASSWORD = process.env.ADMIN_PASSWORD ?? "oak-admin";
 
-export type AdminSession = { email: string };
+export type AdminRole = "viewer" | "editor" | "admin";
+
+export type AdminSession = { email: string; role: AdminRole };
+
+const ROLE_RANK: Record<AdminRole, number> = {
+  viewer: 0,
+  editor: 1,
+  admin: 2,
+};
+
+export function hasRole(session: AdminSession | null, minimum: AdminRole) {
+  if (!session) return false;
+  return ROLE_RANK[session.role] >= ROLE_RANK[minimum];
+}
 
 export function usingMockAuth() {
   return !supabaseConfigured();
@@ -54,7 +67,14 @@ export async function getAdminSession(): Promise<AdminSession | null> {
     try {
       const { data } = await supabase.auth.getUser();
       if (!data.user) return null;
-      return { email: data.user.email ?? "admin" };
+      const rawRole =
+        (data.user.app_metadata as { role?: string } | undefined)?.role ??
+        (data.user.user_metadata as { role?: string } | undefined)?.role;
+      const role: AdminRole =
+        rawRole === "viewer" || rawRole === "editor" || rawRole === "admin"
+          ? rawRole
+          : "admin";
+      return { email: data.user.email ?? "admin", role };
     } catch {
       // Invalid or expired refresh token cookie — treat as no session.
       return null;
@@ -65,12 +85,20 @@ export async function getAdminSession(): Promise<AdminSession | null> {
 
   const jar = await cookies();
   const email = decodeSession(jar.get(MOCK_COOKIE)?.value);
-  return email ? { email } : null;
+  return email ? { email, role: "admin" } : null;
 }
 
-export async function requireAdmin() {
+export async function requireAdmin(
+  roles?: AdminRole | AdminRole[],
+): Promise<AdminSession> {
   const session = await getAdminSession();
   if (!session) redirect("/admin/login");
+  if (roles) {
+    const allowed = Array.isArray(roles) ? roles : [roles];
+    if (!allowed.includes(session.role)) {
+      redirect("/admin/login?error=forbidden");
+    }
+  }
   return session;
 }
 
@@ -117,4 +145,63 @@ export async function signOutAdmin() {
   }
   const jar = await cookies();
   jar.delete(MOCK_COOKIE);
+}
+
+/**
+ * Sends a password-reset email via Supabase Auth. No-op (returns an error)
+ * when Supabase is not configured.
+ */
+export async function requestPasswordReset(
+  email: string,
+): Promise<{ error?: string }> {
+  if (!supabaseConfigured()) {
+    return { error: "Password reset requires Supabase Auth." };
+  }
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/admin/login`,
+  });
+  if (error) return { error: error.message };
+  return {};
+}
+
+/**
+ * Updates the signed-in user's password. Requires an active session.
+ */
+export async function updatePassword(
+  newPassword: string,
+): Promise<{ error?: string }> {
+  if (!supabaseConfigured()) {
+    return { error: "Password updates require Supabase Auth." };
+  }
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return { error: error.message };
+  return {};
+}
+
+/**
+ * Invites a new admin user by email with the given role. Requires the
+ * service role key. Returns an error when Supabase is not configured.
+ */
+export async function inviteAdminUser(
+  email: string,
+  role: AdminRole = "viewer",
+): Promise<{ error?: string }> {
+  if (!supabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { error: "Inviting users requires Supabase service role key." };
+  }
+  const { createClient } = await import("@supabase/supabase-js");
+  const admin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } },
+  );
+  const { error } = await admin.auth.admin.inviteUserByEmail(email, {
+    data: { role },
+  });
+  // Also store role in app_metadata via a follow-up is not possible with
+  // inviteUserByEmail data alone; set it through the auth admin API.
+  if (error) return { error: error.message };
+  return {};
 }

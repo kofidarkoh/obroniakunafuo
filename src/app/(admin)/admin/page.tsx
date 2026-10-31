@@ -198,7 +198,7 @@ export default async function AdminDashboardPage() {
                     <div
                       className={cn(
                         "w-full bg-mint rounded-t-[6px] transition-colors",
-                        count > 0 && "hover:bg-moss",
+                        count > 0 && "hover:bg-forest-800",
                       )}
                       style={{ height: `${height}%` }}
                       title={`${dayLabel}: ${count} donation${count !== 1 ? "s" : ""}`}
@@ -271,6 +271,7 @@ export default async function AdminDashboardPage() {
                 { href: "/admin/stories/new", label: "Write a new story" },
                 { href: "/admin/programmes", label: "Update programmes" },
                 { href: "/admin/settings", label: "Edit organisation details" },
+                 { href: "/admin/export", label: "Download full backup (JSON)" },
               ].map((link) => (
                 <Link
                   key={link.href}

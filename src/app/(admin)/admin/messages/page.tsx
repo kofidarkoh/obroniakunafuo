@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Mail, Phone } from "lucide-react";
-import { setContactStatusAction } from "@/app/admin-actions";
+import { setContactStatusAction, deleteContactAction } from "@/app/admin-actions";
+import { DeleteButton } from "@/components/admin/delete-button";
 import { SubmissionStatusActions } from "@/components/admin/status-actions";
 import {
   AdminCard,
@@ -176,11 +177,18 @@ export default async function AdminMessagesPage({
                     Reply by email
                   </a>
                 </div>
-                <SubmissionStatusActions
-                  id={message.id}
-                  status={message.status}
-                  action={setContactStatusAction}
-                />
+                <div className="flex items-center gap-2">
+                  <SubmissionStatusActions
+                    id={message.id}
+                    status={message.status}
+                    action={setContactStatusAction}
+                  />
+                  <DeleteButton
+                    action={deleteContactAction}
+                    slug={message.id}
+                    label="Delete"
+                  />
+                </div>
               </div>
             </AdminCard>
           ))}

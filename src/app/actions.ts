@@ -16,7 +16,7 @@ import {
   type FormState,
 } from "@/lib/validation";
 import { makeReference } from "@/lib/utils";
-import { notifyAdmin } from "@/lib/email";
+import { notifyAdmin, sendEmail } from "@/lib/email";
 
 function values(formData: FormData) {
   const out: Record<string, unknown> = {};
@@ -55,6 +55,14 @@ export async function submitContact(
     { label: "Preferred reply", value: parsed.data.preferredResponse },
     { label: "Message", value: parsed.data.message },
   ]);
+
+  if (parsed.data.email) {
+    await sendEmail(parsed.data.email, "We received your message — Obroni Akunafo Kuo", [
+      { label: "Name", value: parsed.data.fullName },
+      { label: "Reason", value: parsed.data.reason },
+      { label: "Message", value: parsed.data.message },
+    ]);
+  }
 
   const params = new URLSearchParams({
     name: parsed.data.fullName,
@@ -100,6 +108,16 @@ export async function submitDonation(
       { label: "Message", value: parsed.data.message },
     ],
   );
+
+  if (parsed.data.email) {
+    await sendEmail(parsed.data.email, `Donation received — ${reference}`, [
+      { label: "Reference", value: reference },
+      { label: "Donor", value: parsed.data.donorName },
+      { label: "Amount", value: `GHC ${parsed.data.amount.toFixed(2)}` },
+      { label: "Frequency", value: parsed.data.frequency },
+      { label: "Method", value: parsed.data.method },
+    ]);
+  }
 
   const params = new URLSearchParams({
     ref: reference,
@@ -150,6 +168,15 @@ export async function submitVolunteer(
     { label: "Experience", value: parsed.data.experience },
   ]);
 
+  if (parsed.data.email) {
+    await sendEmail(parsed.data.email, "Volunteer application received — Obroni Akunafo Kuo", [
+      { label: "Name", value: parsed.data.name },
+      { label: "Interests", value: parsed.data.interests.join(", ") },
+      { label: "Availability", value: parsed.data.availability },
+      { label: "Involvement", value: parsed.data.involvement },
+    ]);
+  }
+
   const params = new URLSearchParams({
     name: parsed.data.name,
     areas: parsed.data.interests.join(", "),
@@ -196,6 +223,15 @@ export async function submitPartnership(
       { label: "Message", value: parsed.data.message },
     ],
   );
+
+  if (parsed.data.email) {
+    await sendEmail(parsed.data.email, "Partnership enquiry received — Obroni Akunafo Kuo", [
+      { label: "Organisation", value: parsed.data.organisation },
+      { label: "Contact", value: parsed.data.contactName },
+      { label: "Area", value: parsed.data.area },
+      { label: "Support type", value: parsed.data.supportType },
+    ]);
+  }
 
   const params = new URLSearchParams({
     org: parsed.data.organisation,

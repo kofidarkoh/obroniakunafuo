@@ -9,6 +9,7 @@ import {
   ExternalLink,
   FileText,
   HeartHandshake,
+  ImageIcon,
   LayoutDashboard,
   Layers,
   LogOut,
@@ -37,6 +38,7 @@ const links = [
   { href: "/admin/volunteers", label: "Volunteers", icon: Users },
   { href: "/admin/partnerships", label: "Partnerships", icon: Building2 },
   { href: "/admin/stories", label: "Stories", icon: FileText },
+  { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
   { href: "/admin/programmes", label: "Programmes", icon: Layers },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ] as const;
@@ -56,6 +58,7 @@ const titles: Record<string, string> = {
   "/admin/volunteers": "Volunteers",
   "/admin/partnerships": "Partnerships",
   "/admin/stories": "Stories",
+  "/admin/gallery": "Gallery",
   "/admin/programmes": "Programmes",
   "/admin/settings": "Settings",
 };

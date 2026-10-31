@@ -11,7 +11,7 @@ import {
   StatusPill,
   formatDateTime,
 } from "@/components/admin/ui";
-import { listVolunteers, listNotes } from "@/lib/data/store";
+import { getVolunteer, listNotes } from "@/lib/data/store";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -20,12 +20,14 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function VolunteerDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const volunteers = await listVolunteers();
-  const volunteer = volunteers.find((item) => item.id === id);
+  const volunteer = await getVolunteer(id);
 
   if (!volunteer) notFound();
 
-  const notes = await listNotes("volunteers", id);
+  const notes =
+    volunteer.notes && volunteer.notes.length
+      ? volunteer.notes
+      : await listNotes("volunteers", id);
 
   return (
     <div className="space-y-6">
@@ -116,7 +118,7 @@ export default async function VolunteerDetailPage({ params }: PageProps) {
               />
               <button
                 type="submit"
-                className="rounded-lg bg-grass px-4 py-2.5 text-[11.5px] font-semibold text-white hover:bg-moss"
+                className="rounded-lg bg-emblem px-4 py-2.5 text-[11.5px] font-semibold text-white hover:bg-forest-800"
               >
                 Add note
               </button>

@@ -147,7 +147,7 @@ export function VolunteerForm() {
                   className={cn(
                     "flex size-4 shrink-0 items-center justify-center rounded-[3px] border transition-colors",
                     selected
-                      ? "border-grass bg-grass text-white"
+                      ? "border-grass bg-emblem text-white"
                       : "border-ink/20 bg-white",
                   )}
                 >
@@ -185,7 +185,7 @@ export function VolunteerForm() {
                 className={cn(
                   "h-11 rounded-[8px] border text-[12px] font-medium transition-colors",
                   availability === option
-                    ? "border-grass bg-grass text-white"
+                    ? "border-grass bg-emblem text-white"
                     : "border-line bg-white text-body hover:border-ink/25",
                 )}
               >
@@ -215,7 +215,7 @@ export function VolunteerForm() {
                 className={cn(
                   "h-11 rounded-[8px] border text-[12px] font-medium transition-colors",
                   involvement === option
-                    ? "border-grass bg-grass text-white"
+                    ? "border-grass bg-emblem text-white"
                     : "border-line bg-white text-body hover:border-ink/25",
                 )}
               >
@@ -287,7 +287,7 @@ export function VolunteerForm() {
             "You receive information about next steps and how to get involved",
           ].map((step, index) => (
             <li key={step} className="flex items-start gap-2.5">
-              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-grass text-[8px] font-bold text-white">
+              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emblem text-[8px] font-bold text-white">
                 {index + 1}
               </span>
               <span className="text-[11px] leading-relaxed text-body">
@@ -318,7 +318,7 @@ export function VolunteerForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-[8px] bg-grass text-[14px] font-semibold text-white transition-colors hover:bg-moss disabled:pointer-events-none disabled:opacity-60"
+        className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-[8px] bg-emblem text-[14px] font-semibold text-white transition-colors hover:bg-forest-800 disabled:pointer-events-none disabled:opacity-60"
       >
         {pending ? (
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />

@@ -28,6 +28,7 @@ export const metadata: Metadata = {
   title: "Partner with us",
   description:
     "Partner with Obroni Akunafo Kuo to create lasting impact in Ghana's Ahafo Region. Explore corporate, in-kind, skills and strategic partnerships.",
+  alternates: { canonical: "/partner" },
 };
 
 const whyPartner = [

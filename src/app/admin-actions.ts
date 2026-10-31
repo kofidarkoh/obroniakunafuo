@@ -2,9 +2,17 @@
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin, signInAdmin, signOutAdmin } from "@/lib/auth";
+import {
+  requireAdmin,
+  signInAdmin,
+  signOutAdmin,
+  requestPasswordReset,
+} from "@/lib/auth";
+import { logAdminAction } from "@/lib/audit";
+import { supabaseConfigured } from "@/lib/supabase/server";
 import {
   addNote,
   acknowledgeDonation,
@@ -18,7 +26,7 @@ import {
   upsertProgramme,
   upsertStory,
 } from "@/lib/data/content";
-import type { Notification } from "@/lib/data/types";
+import type { Notification, GalleryItem } from "@/lib/data/types";
 import type { Programme, ProgrammeAccent } from "@/lib/site";
 import type { Story } from "@/lib/stories";
 import {
@@ -33,11 +41,29 @@ const MAX_FAILED_ATTEMPTS = 5;
 
 const rateLimitDir = path.join(process.cwd(), "data", "rate-limit");
 
+async function readFailedLoginCount(ip: string) {
+  try {
+    const file = path.join(rateLimitDir, `${ip}.json`);
+    const data = JSON.parse(await fs.readFile(file, "utf8")) as {
+      count: number;
+      firstAttempt: number;
+    };
+    const now = Date.now();
+    if (now - data.firstAttempt > RATE_LIMIT_WINDOW) return 0;
+    return data.count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
 async function recordFailedLogin(ip: string) {
   try {
     await fs.mkdir(rateLimitDir, { recursive: true });
     const file = path.join(rateLimitDir, `${ip}.json`);
-    let data: { count: number; firstAttempt: number } = { count: 0, firstAttempt: Date.now() };
+    let data: { count: number; firstAttempt: number } = {
+      count: 0,
+      firstAttempt: Date.now(),
+    };
     try {
       data = JSON.parse(await fs.readFile(file, "utf8"));
     } catch {
@@ -56,6 +82,12 @@ async function recordFailedLogin(ip: string) {
   }
 }
 
+function sanitizeIp(raw: string) {
+  const value = raw.split(",")[0]?.trim() || "unknown";
+  const safe = value.replace(/[^a-zA-Z0-9._:-]/g, "_").slice(0, 64);
+  return safe || "unknown";
+}
+
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
@@ -68,16 +100,28 @@ export async function loginAction(
   const password = String(formData.get("password") ?? "");
   const next = text(formData, "next") || "/admin";
 
-  // Rate limit failed logins by IP (mock mode only; Supabase handles its own)
-  const forwarded = formData.get("x-forwarded-for");
-  const ip = forwarded ? String(forwarded) : "unknown";
-  const attempts = await recordFailedLogin(ip);
-  if (attempts > MAX_FAILED_ATTEMPTS) {
-    return { ok: false, message: "Too many failed attempts. Try again later." };
-  }
-
   const result = await signInAdmin(email, password);
-  if (result.error) {
+
+  // In mock (local) mode, apply the file-based rate limiter. In Supabase mode,
+  // Supabase Auth enforces its own rate limiting, so skip disk-based tracking.
+  if (!supabaseConfigured()) {
+    const headerStore = await headers();
+    const ip = sanitizeIp(
+      headerStore.get("x-forwarded-for") ||
+        headerStore.get("x-real-ip") ||
+        "unknown",
+    );
+
+    const attempts = await readFailedLoginCount(ip);
+    if (attempts >= MAX_FAILED_ATTEMPTS) {
+      return { ok: false, message: "Too many failed attempts. Try again later." };
+    }
+
+    if (result.error) {
+      await recordFailedLogin(ip);
+      return { ok: false, message: result.error };
+    }
+  } else if (result.error) {
     return { ok: false, message: result.error };
   }
 
@@ -89,13 +133,52 @@ export async function logoutAction() {
   redirect("/admin/login");
 }
 
+export async function requestPasswordResetAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const email = text(formData, "email");
+  if (!email) {
+    return { ok: false, message: "Please enter your email address." };
+  }
+  const result = await requestPasswordReset(email);
+  if (result.error) {
+    return { ok: false, message: result.error };
+  }
+  return {
+    ok: true,
+    message: "If an account exists, a reset link has been sent.",
+  };
+}
+
 export async function setDonationStatusAction(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const id = text(formData, "id");
   const status = text(formData, "status");
   if (!id) return;
   if (status === "confirmed" || status === "cancelled" || status === "pending") {
     await setDonationStatus(id, status);
+    await logAdminAction({
+      actor: session.email,
+      action: "status",
+      entityType: "donation",
+      entityId: id,
+      after: status,
+    });
+    if (status === "confirmed") {
+      const { getDonation } = await import("@/lib/data/store");
+      const donation = await getDonation(id);
+      if (donation?.email) {
+        const { sendEmail } = await import("@/lib/email");
+        await sendEmail(donation.email, `Donation confirmed — ${donation.reference}`, [
+          { label: "Reference", value: donation.reference },
+          { label: "Donor", value: donation.donorName },
+          { label: "Amount", value: `GHC ${donation.amount.toFixed(2)}` },
+          { label: "Frequency", value: donation.frequency },
+          { label: "Method", value: donation.method },
+        ]);
+      }
+    }
   }
   revalidatePath("/admin");
   revalidatePath("/admin/donations");
@@ -112,36 +195,57 @@ export async function acknowledgeDonationAction(formData: FormData) {
 }
 
 export async function setContactStatusAction(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const id = text(formData, "id");
   const status = text(formData, "status");
   if (!id) return;
   if (status === "new" || status === "reviewed" || status === "archived") {
     await setSubmissionStatus("contacts", id, status);
+    await logAdminAction({
+      actor: session.email,
+      action: "status",
+      entityType: "contact",
+      entityId: id,
+      after: status,
+    });
   }
   revalidatePath("/admin");
   revalidatePath("/admin/messages");
 }
 
 export async function setVolunteerStatusAction(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const id = text(formData, "id");
   const status = text(formData, "status");
   if (!id) return;
   if (status === "new" || status === "reviewed" || status === "archived") {
     await setSubmissionStatus("volunteers", id, status);
+    await logAdminAction({
+      actor: session.email,
+      action: "status",
+      entityType: "volunteer",
+      entityId: id,
+      after: status,
+    });
   }
   revalidatePath("/admin");
   revalidatePath("/admin/volunteers");
 }
 
 export async function setPartnershipStatusAction(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const id = text(formData, "id");
   const status = text(formData, "status");
   if (!id) return;
   if (status === "new" || status === "reviewed" || status === "archived") {
     await setSubmissionStatus("partnerships", id, status);
+    await logAdminAction({
+      actor: session.email,
+      action: "status",
+      entityType: "partnership",
+      entityId: id,
+      after: status,
+    });
   }
   revalidatePath("/admin");
   revalidatePath("/admin/partnerships");
@@ -177,7 +281,7 @@ export async function saveStoryAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireAdmin();
+  const session = await requireAdmin();
   const title = text(formData, "title");
   if (title.length < 3) {
     return {
@@ -261,6 +365,13 @@ export async function saveStoryAction(
 
   try {
     await upsertStory(story);
+    await logAdminAction({
+      actor: session.email,
+      action: "upsert",
+      entityType: "story",
+      entityId: slug,
+      after: title,
+    });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Failed to save story.";
@@ -281,9 +392,17 @@ export async function saveStoryAction(
 }
 
 export async function deleteStoryAction(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const slug = text(formData, "slug");
-  if (slug) await deleteAdminStory(slug);
+  if (slug) {
+    await deleteAdminStory(slug);
+    await logAdminAction({
+      actor: session.email,
+      action: "delete",
+      entityType: "story",
+      entityId: slug,
+    });
+  }
   revalidatePath("/admin/stories");
   revalidatePath("/");
   revalidatePath("/stories");
@@ -293,7 +412,7 @@ export async function saveProgrammeAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireAdmin();
+  const session = await requireAdmin();
   const title = text(formData, "title");
   if (title.length < 3) {
     return { ok: false, message: "Please enter a programme title." };
@@ -314,11 +433,13 @@ export async function saveProgrammeAction(
 
   const existingSlug = text(formData, "existingSlug");
 
-  // Duplicate-slug guard: prevent overwriting a different programme's slug
-  if (!existingSlug) {
+  // Duplicate-slug guard: prevent overwriting a different programme's slug.
+  // Renaming an existing programme is allowed, but it must not take over the
+  // slug of another record.
+  {
     const { getAdminProgramme } = await import("@/lib/data/content");
     const existing = await getAdminProgramme(slug);
-    if (existing) {
+    if (existing && slug !== existingSlug) {
       return { ok: false, message: "A programme with this slug already exists." };
     }
   }
@@ -346,6 +467,13 @@ export async function saveProgrammeAction(
 
   try {
     await upsertProgramme(programme);
+    await logAdminAction({
+      actor: session.email,
+      action: "upsert",
+      entityType: "programme",
+      entityId: slug,
+      after: title,
+    });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Failed to save programme.";
@@ -364,12 +492,86 @@ export async function saveProgrammeAction(
   redirect("/admin/programmes");
 }
 
+export async function deleteDonationAction(formData: FormData) {
+  const session = await requireAdmin();
+  const id = text(formData, "id") || text(formData, "slug");
+  if (!id) return;
+  const { deleteDonation } = await import("@/lib/data/store");
+  await deleteDonation(id);
+  const { logAdminAction } = await import("@/lib/audit");
+  await logAdminAction({
+    actor: session.email,
+    action: "delete",
+    entityType: "donation",
+    entityId: id,
+  });
+  revalidatePath("/admin");
+  revalidatePath("/admin/donations");
+}
+
+export async function deleteContactAction(formData: FormData) {
+  const session = await requireAdmin();
+  const id = text(formData, "id") || text(formData, "slug");
+  if (!id) return;
+  const { deleteSubmission } = await import("@/lib/data/store");
+  await deleteSubmission("contacts", id);
+  const { logAdminAction } = await import("@/lib/audit");
+  await logAdminAction({
+    actor: session.email,
+    action: "delete",
+    entityType: "contact",
+    entityId: id,
+  });
+  revalidatePath("/admin");
+  revalidatePath("/admin/messages");
+}
+
+export async function deleteVolunteerAction(formData: FormData) {
+  const session = await requireAdmin();
+  const id = text(formData, "id") || text(formData, "slug");
+  if (!id) return;
+  const { deleteSubmission } = await import("@/lib/data/store");
+  await deleteSubmission("volunteers", id);
+  const { logAdminAction } = await import("@/lib/audit");
+  await logAdminAction({
+    actor: session.email,
+    action: "delete",
+    entityType: "volunteer",
+    entityId: id,
+  });
+  revalidatePath("/admin");
+  revalidatePath("/admin/volunteers");
+}
+
+export async function deletePartnershipAction(formData: FormData) {
+  const session = await requireAdmin();
+  const id = text(formData, "id") || text(formData, "slug");
+  if (!id) return;
+  const { deleteSubmission } = await import("@/lib/data/store");
+  await deleteSubmission("partnerships", id);
+  const { logAdminAction } = await import("@/lib/audit");
+  await logAdminAction({
+    actor: session.email,
+    action: "delete",
+    entityType: "partnership",
+    entityId: id,
+  });
+  revalidatePath("/admin");
+  revalidatePath("/admin/partnerships");
+}
+
 export async function deleteProgrammeAction(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const slug = text(formData, "slug");
   if (slug) {
     const { deleteAdminProgramme } = await import("@/lib/data/content");
     await deleteAdminProgramme(slug);
+    await logAdminAction({
+      actor: session.email,
+      action: "delete",
+      entityType: "programme",
+      entityId: slug,
+    });
   }
   revalidatePath("/admin/programmes");
   revalidatePath("/");
@@ -380,9 +582,20 @@ export async function saveNotificationAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireAdmin();
+  const session = await requireAdmin();
   const slug = text(formData, "slug");
   if (!slug) return { ok: false, message: "Missing notification slug." };
+
+  const existingSlug = text(formData, "existingSlug");
+
+  // Duplicate-slug guard: prevent overwriting a different notification's slug.
+  if (slug !== existingSlug) {
+    const { getAdminNotification } = await import("@/lib/data/content");
+    const existing = await getAdminNotification(slug);
+    if (existing) {
+      return { ok: false, message: "A notification with this slug already exists." };
+    }
+  }
 
   const title = text(formData, "title");
   if (title.length < 3) {
@@ -420,6 +633,13 @@ export async function saveNotificationAction(
 
   try {
     await upsertNotification(notification);
+    await logAdminAction({
+      actor: session.email,
+      action: "upsert",
+      entityType: "notification",
+      entityId: slug,
+      after: title,
+    });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Failed to save notification.";
@@ -432,11 +652,78 @@ export async function saveNotificationAction(
   redirect("/admin/notifications");
 }
 
+export async function saveGalleryAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const session = await requireAdmin();
+  const slug = text(formData, "slug");
+  if (!slug) return { ok: false, message: "Missing gallery slug." };
+
+  const existingSlug = text(formData, "existingSlug");
+
+  if (slug !== existingSlug) {
+    const { getAdminGallery } = await import("@/lib/data/content");
+    const existing = await getAdminGallery(slug);
+    if (existing) {
+      return { ok: false, message: "A gallery item with this slug already exists." };
+    }
+  }
+
+  const title = text(formData, "title");
+  if (title.length < 3) {
+    return { ok: false, message: "Please enter a title." };
+  }
+
+  const image = text(formData, "image");
+  if (!image) {
+    return { ok: false, message: "Please provide an image." };
+  }
+
+  const imageAlt = text(formData, "imageAlt");
+  const caption = text(formData, "caption");
+  const category = text(formData, "category");
+
+  const status = (formData.get("status") || "draft") as "draft" | "published";
+
+  const item: GalleryItem = {
+    slug,
+    title,
+    image,
+    imageAlt: imageAlt || title,
+    caption,
+    category,
+    status,
+    createdAt: new Date().toISOString(),
+  };
+
+  try {
+    const { upsertGallery } = await import("@/lib/data/content");
+    await upsertGallery(item);
+    const { logAdminAction } = await import("@/lib/audit");
+    await logAdminAction({
+      actor: session.email,
+      action: "upsert",
+      entityType: "gallery",
+      entityId: slug,
+      after: title,
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Failed to save gallery item.";
+    return { ok: false, message };
+  }
+
+  revalidatePath("/admin/gallery");
+  revalidatePath("/gallery");
+  redirect("/admin/gallery");
+}
+
 export async function saveSettingsAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireAdmin();
+  const session = await requireAdmin();
   const patch = {
     email: text(formData, "email"),
     phonePrimary: text(formData, "phonePrimary"),
@@ -452,10 +739,21 @@ export async function saveSettingsAction(
     linkedin: text(formData, "linkedin"),
     whatsapp: text(formData, "whatsapp"),
     adminEmail: text(formData, "adminEmail"),
+    seoTitle: text(formData, "seoTitle"),
+    seoDescription: text(formData, "seoDescription"),
+    ogImage: text(formData, "ogImage"),
+    googleSiteVerification: text(formData, "googleSiteVerification"),
   };
 
   try {
     await saveSiteSettings(patch);
+    await logAdminAction({
+      actor: session.email,
+      action: "update",
+      entityType: "settings",
+      entityId: "site",
+      after: "updated",
+    });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Failed to save settings.";

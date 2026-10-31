@@ -306,7 +306,7 @@ export function StoryForm({
                 className={cn(
                   "rounded-[6px] px-2.5 py-1 text-[10.5px] font-semibold transition-colors",
                   status === "published"
-                    ? "bg-grass text-white"
+                    ? "bg-emblem text-white"
                     : "text-muted hover:text-ink",
                 )}
               >
@@ -325,7 +325,7 @@ export function StoryForm({
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-grass px-4 text-[11.5px] font-semibold text-white transition-colors hover:bg-moss disabled:opacity-60"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emblem px-4 text-[11.5px] font-semibold text-white transition-colors hover:bg-forest-800 disabled:opacity-60"
             >
               {pending ? (
                 <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />

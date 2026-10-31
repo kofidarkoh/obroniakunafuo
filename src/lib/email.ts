@@ -65,6 +65,26 @@ function renderHtml(title: string, lines: NotificationLine[]) {
  * Sends a notification to the admin email stored in site settings.
  * Never throws: a failed email must not break the public submission.
  */
+export async function sendEmail(to: string, subject: string, lines: NotificationLine[]) {
+  const mailer = client();
+  if (!mailer || !to) return;
+
+  try {
+    const payload = {
+      from:
+        process.env.RESEND_FROM ??
+        process.env.RESEND_FROM_EMAIL ??
+        "OAK Website <onboarding@resend.dev>",
+      to,
+      subject,
+      html: renderHtml(subject, lines),
+    };
+    await mailer.emails.send(payload);
+  } catch (error) {
+    console.error("[email] Failed to send email", error);
+  }
+}
+
 export async function notifyAdmin(subject: string, lines: NotificationLine[]) {
   const mailer = client();
   if (!mailer) return;
@@ -74,7 +94,7 @@ export async function notifyAdmin(subject: string, lines: NotificationLine[]) {
     const to = settings.adminEmail || process.env.ADMIN_NOTIFICATION_EMAIL;
     if (!to) return;
 
-    await mailer.emails.send({
+    const payload = {
       from:
         process.env.RESEND_FROM ??
         process.env.RESEND_FROM_EMAIL ??
@@ -82,7 +102,25 @@ export async function notifyAdmin(subject: string, lines: NotificationLine[]) {
       to,
       subject,
       html: renderHtml(subject, lines),
-    });
+    };
+
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await mailer.emails.send(payload);
+        return;
+      } catch (error) {
+        lastError = error;
+        console.warn(
+          `[email] Attempt ${attempt + 1} failed to send admin notification`,
+          error,
+        );
+      }
+    }
+    console.error(
+      "[email] Failed to send admin notification after retries",
+      lastError,
+    );
   } catch (error) {
     console.error("[email] Failed to send admin notification", error);
   }

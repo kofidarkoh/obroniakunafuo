@@ -33,6 +33,7 @@ export async function generateMetadata({
   return {
     title: story.title,
     description: story.excerpt,
+    alternates: { canonical: `/stories/${slug}` },
     openGraph: {
       title: story.title,
       description: story.excerpt,
@@ -251,7 +252,7 @@ export default async function StoryDetailPage({ params }: PageProps) {
             the people behind these stories.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <ButtonLink href="/donate" variant="orange" size="lg">
+            <ButtonLink href="/donate" variant="lime" size="lg">
               <Heart className="size-4" aria-hidden="true" />
               Donate now
             </ButtonLink>

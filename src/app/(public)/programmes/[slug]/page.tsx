@@ -21,6 +21,7 @@ export async function generateMetadata({
   return {
     title: programme.title,
     description: programme.summary,
+    alternates: { canonical: `/programmes/${slug}` },
     openGraph: {
       title: programme.title,
       description: programme.summary,
@@ -182,7 +183,7 @@ export default async function ProgrammeDetailPage({ params }: PageProps) {
               </p>
               <ButtonLink
                 href="/donate"
-                variant="orange"
+                variant="lime"
                 size="sm"
                 className="mt-4"
               >

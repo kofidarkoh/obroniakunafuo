@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { readJson, updateJson } from "@/lib/data/json-db";
 import {
-  createSupabaseServerClient,
   createSupabaseServiceClient,
   supabaseConfigured,
 } from "@/lib/supabase/server";
@@ -36,7 +35,7 @@ function now() {
 
 async function listContactsJson() {
   const items = await readJson<ContactMessage[]>(files.contacts, () => []);
-  return [...items];
+  return items.map((item) => ({ ...item, notes: [] }));
 }
 
 async function listDonationsJson() {
@@ -49,7 +48,7 @@ async function listVolunteersJson() {
     files.volunteers,
     () => [],
   );
-  return [...items];
+  return items.map((item) => ({ ...item, notes: [] }));
 }
 
 async function listPartnershipsJson() {
@@ -57,7 +56,7 @@ async function listPartnershipsJson() {
     files.partnerships,
     () => [],
   );
-  return [...items];
+  return items.map((item) => ({ ...item, notes: [] }));
 }
 
 async function createContactMessageJson(
@@ -192,7 +191,31 @@ async function countTotalPartnershipsJson() {
 
 async function getDonationJson(id: string) {
   const items = await readJson<Donation[]>(files.donations, () => []);
-  return items.find((donation) => donation.id === id);
+  const donation = items.find((item) => item.id === id);
+  if (!donation) return undefined;
+  donation.notes = donation.notes ?? [];
+  return donation;
+}
+
+async function getContactJson(id: string) {
+  const items = await readJson<ContactMessage[]>(files.contacts, () => []);
+  return items.find((item) => item.id === id);
+}
+
+async function getVolunteerJson(id: string) {
+  const items = await readJson<VolunteerApplication[]>(
+    files.volunteers,
+    () => [],
+  );
+  return items.find((item) => item.id === id);
+}
+
+async function getPartnershipJson(id: string) {
+  const items = await readJson<PartnershipEnquiry[]>(
+    files.partnerships,
+    () => [],
+  );
+  return items.find((item) => item.id === id);
 }
 
 async function setDonationStatusJson(
@@ -206,6 +229,10 @@ async function setDonationStatusJson(
     if (!donation) return;
     donation.status = status;
     donation.confirmedAt = status === "confirmed" ? now() : undefined;
+    if (status !== "confirmed") {
+      donation.acknowledgedAt = undefined;
+      donation.acknowledgedBy = undefined;
+    }
     updated = donation;
   });
 
@@ -233,6 +260,35 @@ async function acknowledgeDonationJson(
   return updated;
 }
 
+async function deleteDonationJson(id: string) {
+  let removed = false;
+  await updateJson<Donation[]>(files.donations, () => [], (items) => {
+    const index = items.findIndex((item) => item.id === id);
+    if (index < 0) return;
+    items.splice(index, 1);
+    removed = true;
+  });
+  return removed;
+}
+
+async function deleteSubmissionJson(
+  collection: "contacts" | "volunteers" | "partnerships",
+  id: string,
+) {
+  let removed = false;
+  await updateJson<(ContactMessage | VolunteerApplication | PartnershipEnquiry)[]>(
+    files[collection],
+    () => [],
+    (items) => {
+      const index = items.findIndex((item) => item.id === id);
+      if (index < 0) return;
+      items.splice(index, 1);
+      removed = true;
+    },
+  );
+  return removed;
+}
+
 async function setSubmissionStatusJson(
   collection: "contacts" | "volunteers" | "partnerships",
   id: string,
@@ -256,12 +312,23 @@ async function setSubmissionStatusJson(
 }
 
 async function addNoteJson(
-  collection: "contacts" | "volunteers" | "partnerships",
+  collection: "contacts" | "volunteers" | "partnerships" | "donations",
   id: string,
   author: string,
   text: string,
 ) {
   let note: AdminNote | null = null;
+
+  if (collection === "donations") {
+    await updateJson<Donation[]>(files.donations, () => [], (items) => {
+      const record = items.find((item) => item.id === id);
+      if (!record) return;
+      record.notes ??= [];
+      note = { id: generateId(), author, text, createdAt: now() };
+      record.notes.unshift(note);
+    });
+    return note;
+  }
 
   await updateJson<(ContactMessage | VolunteerApplication | PartnershipEnquiry)[]>(
     files[collection],
@@ -279,9 +346,14 @@ async function addNoteJson(
 }
 
 async function listNotesJson(
-  collection: "contacts" | "volunteers" | "partnerships",
+  collection: "contacts" | "volunteers" | "partnerships" | "donations",
   id: string,
 ): Promise<AdminNote[]> {
+  if (collection === "donations") {
+    const items = await readJson<Donation[]>(files.donations, () => []);
+    const record = items.find((item) => item.id === id);
+    return record?.notes ?? [];
+  }
   const items = await readJson<(ContactMessage | VolunteerApplication | PartnershipEnquiry)[]>(
     files[collection],
     () => [],
@@ -644,9 +716,10 @@ async function getDonationSupabase(id: string) {
     .from("donations")
     .select("*")
     .eq("id", id)
-    .single();
+    .maybeSingle();
   if (error) throw error;
   if (!data) return null;
+  const notes = await listNotesSupabase("donations", id);
   return {
     id: data.id,
     donorName: data.donor_name,
@@ -662,6 +735,122 @@ async function getDonationSupabase(id: string) {
     confirmedAt: data.confirmed_at ?? undefined,
     acknowledgedAt: data.acknowledged_at ?? undefined,
     acknowledgedBy: data.acknowledged_by ?? undefined,
+    notes,
+  };
+}
+
+async function getContactSupabase(id: string): Promise<ContactMessage | null> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  // Fetch notes for this record
+  const { data: noteRows } = await supabase
+    .from("notes")
+    .select("*")
+    .eq("collection", "contacts")
+    .eq("record_id", id)
+    .order("created_at", { ascending: false });
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone ?? undefined,
+    organisation: data.organisation ?? undefined,
+    reason: data.reason,
+    message: data.message,
+    preferredResponse: data.preferred_response,
+    status: data.status,
+    createdAt: data.created_at,
+    notes: (noteRows ?? []).map((row) => ({
+      id: row.id,
+      author: row.author,
+      text: row.text,
+      createdAt: row.created_at,
+    })),
+  };
+}
+
+async function getVolunteerSupabase(
+  id: string,
+): Promise<VolunteerApplication | null> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from("volunteers")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const { data: noteRows } = await supabase
+    .from("notes")
+    .select("*")
+    .eq("collection", "volunteers")
+    .eq("record_id", id)
+    .order("created_at", { ascending: false });
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    location: data.location,
+    interests: data.interests ?? [],
+    availability: data.availability,
+    involvement: data.involvement,
+    skills: data.skills ?? undefined,
+    motivation: data.motivation ?? undefined,
+    experience: data.experience ?? undefined,
+    status: data.status,
+    createdAt: data.created_at,
+    notes: (noteRows ?? []).map((row) => ({
+      id: row.id,
+      author: row.author,
+      text: row.text,
+      createdAt: row.created_at,
+    })),
+  };
+}
+
+async function getPartnershipSupabase(
+  id: string,
+): Promise<PartnershipEnquiry | null> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from("partnerships")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const { data: noteRows } = await supabase
+    .from("notes")
+    .select("*")
+    .eq("collection", "partnerships")
+    .eq("record_id", id)
+    .order("created_at", { ascending: false });
+  return {
+    id: data.id,
+    organisation: data.organisation,
+    contactName: data.contact_name,
+    email: data.email,
+    phone: data.phone,
+    area: data.area,
+    supportType: data.support_type,
+    message: data.message,
+    meetingFormat: data.meeting_format,
+    contactMethod: data.contact_method,
+    status: data.status,
+    createdAt: data.created_at,
+    notes: (noteRows ?? []).map((row) => ({
+      id: row.id,
+      author: row.author,
+      text: row.text,
+      createdAt: row.created_at,
+    })),
   };
 }
 
@@ -675,13 +864,15 @@ async function setDonationStatusSupabase(
     updates.confirmed_at = now();
   } else {
     updates.confirmed_at = null;
+    updates.acknowledged_at = null;
+    updates.acknowledged_by = null;
   }
   const { data, error } = await supabase
     .from("donations")
     .update(updates)
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   if (!data) return null;
   return {
@@ -716,7 +907,7 @@ async function acknowledgeDonationSupabase(
     .update({ acknowledged_at: now(), acknowledged_by: author })
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   if (!data) return null;
   return {
@@ -748,23 +939,81 @@ async function setSubmissionStatusSupabase(
     .update({ status })
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   if (!data) return null;
+
+  if (collection === "contacts") {
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone ?? undefined,
+      organisation: data.organisation ?? undefined,
+      reason: data.reason,
+      message: data.message,
+      preferredResponse: data.preferred_response,
+      status: data.status,
+      createdAt: data.created_at,
+      notes: [],
+    };
+  }
+
+  if (collection === "volunteers") {
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      location: data.location,
+      interests: data.interests ?? [],
+      availability: data.availability,
+      involvement: data.involvement,
+      skills: data.skills ?? undefined,
+      motivation: data.motivation ?? undefined,
+      experience: data.experience ?? undefined,
+      status: data.status,
+      createdAt: data.created_at,
+      notes: [],
+    };
+  }
+
   return {
     id: data.id,
-    name: data.name ?? undefined,
-    email: data.email ?? undefined,
-    phone: data.phone ?? undefined,
-    organisation: data.organisation ?? undefined,
+    organisation: data.organisation,
+    contactName: data.contact_name,
+    email: data.email,
+    phone: data.phone,
+    area: data.area,
+    supportType: data.support_type,
+    message: data.message,
+    meetingFormat: data.meeting_format,
+    contactMethod: data.contact_method,
     status: data.status,
     createdAt: data.created_at,
     notes: [],
   };
 }
 
-async function addNoteSupabase(
+async function deleteDonationSupabase(id: string) {
+  const supabase = await getSupabase();
+  const { error } = await supabase.from("donations").delete().eq("id", id);
+  if (error) throw error;
+  return true;
+}
+
+async function deleteSubmissionSupabase(
   collection: "contacts" | "volunteers" | "partnerships",
+  id: string,
+) {
+  const supabase = await getSupabase();
+  const { error } = await supabase.from(collection).delete().eq("id", id);
+  if (error) throw error;
+  return true;
+}
+
+async function addNoteSupabase(
+  collection: "contacts" | "volunteers" | "partnerships" | "donations",
   id: string,
   author: string,
   text: string,
@@ -785,7 +1034,7 @@ async function addNoteSupabase(
 }
 
 async function listNotesSupabase(
-  collection: "contacts" | "volunteers" | "partnerships",
+  collection: "contacts" | "volunteers" | "partnerships" | "donations",
   id: string,
 ): Promise<AdminNote[]> {
   const supabase = await getSupabase();
@@ -887,6 +1136,7 @@ async function listDonationsPaginatedSupabase({
 }) {
   const supabase = await getSupabase();
   let query = supabase.from("donations").select("*", { count: "exact" });
+  let statusQuery = supabase.from("donations").select("status");
 
   if (status && status !== "all") {
     query = query.eq("status", status);
@@ -894,17 +1144,19 @@ async function listDonationsPaginatedSupabase({
 
   if (search) {
     const q = `%${search}%`;
-    query = query.or(
-      `donor_name.ilike.${q},email.ilike.${q},reference.ilike.${q},phone.ilike.${q}`,
-    );
+    const filter = `donor_name.ilike.${q},email.ilike.${q},reference.ilike.${q},phone.ilike.${q}`;
+    query = query.or(filter);
+    statusQuery = statusQuery.or(filter);
   }
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
   query = query.order("created_at", { ascending: false }).range(from, to);
 
-  const { data, error, count } = await query;
+  const [{ data, error, count }, { data: statusRows, error: statusError }] =
+    await Promise.all([query, statusQuery]);
   if (error) throw error;
+  if (statusError) throw statusError;
 
   return {
     items: (data ?? []).map((row) => ({
@@ -926,6 +1178,7 @@ async function listDonationsPaginatedSupabase({
     total: count ?? 0,
     page,
     pageSize,
+    counts: tallyStatuses(statusRows),
   };
 }
 
@@ -1187,6 +1440,27 @@ export async function getDonation(id: string) {
   return getDonationJson(id);
 }
 
+export async function getContact(id: string) {
+  if (supabaseConfigured()) {
+    return getContactSupabase(id);
+  }
+  return getContactJson(id);
+}
+
+export async function getVolunteer(id: string) {
+  if (supabaseConfigured()) {
+    return getVolunteerSupabase(id);
+  }
+  return getVolunteerJson(id);
+}
+
+export async function getPartnership(id: string) {
+  if (supabaseConfigured()) {
+    return getPartnershipSupabase(id);
+  }
+  return getPartnershipJson(id);
+}
+
 export async function setDonationStatus(
   id: string,
   status: DonationStatus,
@@ -1225,8 +1499,25 @@ export async function setSubmissionStatus(
   return setSubmissionStatusJson(collection, id, status);
 }
 
-export async function addNote(
+export async function deleteDonation(id: string) {
+  if (supabaseConfigured()) {
+    return deleteDonationSupabase(id);
+  }
+  return deleteDonationJson(id);
+}
+
+export async function deleteSubmission(
   collection: "contacts" | "volunteers" | "partnerships",
+  id: string,
+) {
+  if (supabaseConfigured()) {
+    return deleteSubmissionSupabase(collection, id);
+  }
+  return deleteSubmissionJson(collection, id);
+}
+
+export async function addNote(
+  collection: "contacts" | "volunteers" | "partnerships" | "donations",
   id: string,
   author: string,
   text: string,
@@ -1238,7 +1529,7 @@ export async function addNote(
 }
 
 export async function listNotes(
-  collection: "contacts" | "volunteers" | "partnerships",
+  collection: "contacts" | "volunteers" | "partnerships" | "donations",
   id: string,
 ): Promise<AdminNote[]> {
   if (supabaseConfigured()) {
@@ -1299,9 +1590,6 @@ export async function listDonationsPaginated(args: {
   }
   const items = await readJson<Donation[]>(files.donations, () => []);
   let filtered = items;
-  if (args.status && args.status !== "all") {
-    filtered = filtered.filter((item) => item.status === args.status);
-  }
   if (args.search) {
     const q = args.search.toLowerCase();
     filtered = filtered.filter(
@@ -1312,11 +1600,16 @@ export async function listDonationsPaginated(args: {
         item.phone.includes(q),
     );
   }
+  const counts = tallyStatuses(filtered);
+  if (args.status && args.status !== "all") {
+    filtered = filtered.filter((item) => item.status === args.status);
+  }
   const total = filtered.length;
   const from = (args.page - 1) * args.pageSize;
   return {
     items: filtered.slice(from, from + args.pageSize),
     total,
+    counts,
     page: args.page,
     pageSize: args.pageSize,
   };
@@ -1399,3 +1692,4 @@ export async function listPartnershipsPaginated(args: {
     pageSize: args.pageSize,
   };
 }
+

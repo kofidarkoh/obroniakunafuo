@@ -40,6 +40,7 @@ export const metadata: Metadata = {
   title: "Programmes",
   description:
     "Explore OAK's four core programmes: food support and relief, education sponsorship, healthcare support, and shelter and housing support in Ghana's Ahafo Region.",
+  alternates: { canonical: "/programmes" },
 };
 
 const accent = {

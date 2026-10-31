@@ -39,6 +39,7 @@ export const metadata: Metadata = {
   title: "Restoring hope, dignity and love",
   description:
     "Obroni Akunafo Kuo supports widows, orphans, persons with disabilities and the aged in Ghana's Ahafo Region through food relief, education, healthcare and empowerment.",
+  alternates: { canonical: "/" },
 };
 
 const accentText: Record<string, string> = {
@@ -127,7 +128,7 @@ export default async function HomePage() {
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                <ButtonLink href="/donate" variant="purple" size="lg">
+                <ButtonLink href="/donate" variant="lime" size="lg">
                   <Heart className="size-4" aria-hidden="true" />
                   Donate now
                 </ButtonLink>

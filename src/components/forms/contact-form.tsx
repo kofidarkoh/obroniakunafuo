@@ -166,7 +166,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[10px] bg-grass text-[15px] font-semibold text-white transition-colors hover:bg-moss disabled:pointer-events-none disabled:opacity-60"
+        className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[10px] bg-emblem text-[15px] font-semibold text-white transition-colors hover:bg-forest-800 disabled:pointer-events-none disabled:opacity-60"
       >
         {pending ? (
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />

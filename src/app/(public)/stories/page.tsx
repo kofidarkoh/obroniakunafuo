@@ -40,6 +40,7 @@ export const metadata: Metadata = {
   title: "Stories & impact",
   description:
     "Real people, real impact. Read the stories behind Obroni Akunafo Kuo's work and see exactly how every cedi was spent in the Ahafo Region.",
+  alternates: { canonical: "/stories" },
 };
 
 const categoryIcons = {

@@ -46,7 +46,7 @@ export function LoginForm({ next }: { next?: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-grass text-sm font-semibold text-white transition-colors hover:bg-moss disabled:pointer-events-none disabled:opacity-60"
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-emblem text-sm font-semibold text-white transition-colors hover:bg-forest-800 disabled:pointer-events-none disabled:opacity-60"
       >
         {pending ? (
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />

@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   title: "Volunteer",
   description:
     "Be part of a community that cares. Volunteer with Obroni Akunafo Kuo and help support widows, orphans, persons with disabilities and the aged in Ghana.",
+  alternates: { canonical: "/volunteer" },
 };
 
 const whyVolunteer = [
